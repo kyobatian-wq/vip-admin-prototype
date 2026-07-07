@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VIP客户端页面 — 产品需求文档（PRD）</title>
+<style>
+  :root{
+    --bg:#F5F6F8; --card:#FFFFFF; --text:#1B2233; --sub:#6B7280; --faint:#9AA1B1;
+    --border:#E7E9EE; --primary:#3D63F5; --primary-dim:#EEF1FE;
+    --head-bg:#2F5496;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:"PingFang SC","Microsoft YaHei",-apple-system,sans-serif;
+    font-size:14.5px; line-height:1.8;
+  }
+  .layout{display:flex; max-width:1180px; margin:0 auto;}
+  .toc{
+    width:230px; flex-shrink:0; position:sticky; top:0; align-self:flex-start;
+    height:100vh; overflow-y:auto; padding:28px 16px 40px 0;
+  }
+  .toc a{
+    display:block; padding:6px 10px; font-size:12.5px; color:var(--sub);
+    text-decoration:none; border-radius:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .toc a:hover{background:var(--primary-dim); color:var(--primary);}
+  .toc .toc-h1{font-weight:700; color:var(--text); margin-top:10px;}
+  .toc .toc-h2{padding-left:22px;}
+
+  .main{flex:1; min-width:0; padding:40px 48px 100px;}
+  .cover{margin-bottom:8px;}
+  .cover h1{font-size:30px; margin:0 0 6px;}
+  .cover .subtitle{font-size:17px; color:var(--primary); font-weight:700; margin-bottom:4px;}
+  .cover .desc{font-size:13px; color:var(--sub); margin-bottom:26px;}
+
+  h1{
+    font-size:21px; margin:44px 0 16px; padding-bottom:10px;
+    border-bottom:2px solid var(--head-bg); scroll-margin-top:20px;
+  }
+  h2{font-size:16.5px; margin:28px 0 12px; color:var(--text); scroll-margin-top:20px;}
+  h3{font-size:14px; margin:18px 0 8px; color:var(--sub); scroll-margin-top:20px;}
+
+  p{margin:0 0 12px;}
+  ul{margin:0 0 14px; padding-left:22px;}
+  li{margin-bottom:6px;}
+  b{font-weight:700;}
+
+  table{width:100%; border-collapse:collapse; margin:6px 0 20px; font-size:13px;}
+  th{
+    background:var(--head-bg); color:#fff; text-align:left; font-weight:700;
+    padding:9px 12px; white-space:nowrap;
+  }
+  td{padding:9px 12px; border-bottom:1px solid var(--border); vertical-align:top;}
+  tr:nth-child(even) td{background:#F7F8FA;}
+  tr:last-child td{border-bottom:none;}
+
+  .quote{
+    border-left:3px solid var(--faint); background:#FAFBFC;
+    padding:10px 14px; color:var(--sub); font-size:12.5px; font-style:italic;
+    margin:10px 0 18px; border-radius:0 6px 6px 0;
+  }
+  .field-label b{color:var(--text);}
+  hr.sep{border:none; border-top:1px solid var(--border); margin:36px 0;}
+
+  @media (max-width: 900px){
+    .toc{display:none;}
+    .main{padding:24px 20px 60px;}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <nav class="toc">
+    <a href="#top" class="toc-h1">封面 / 文档信息</a>
+    <a href="#s1" class="toc-h1">一、需求背景与目标</a>
+    <a href="#s1-1" class="toc-h2">1.1 背景</a>
+    <a href="#s1-2" class="toc-h2">1.2 目标</a>
+    <a href="#s2" class="toc-h1">二、功能范围概览</a>
+    <a href="#s3" class="toc-h1">三、页面结构总览</a>
+    <a href="#s4" class="toc-h1">四、功能详细设计</a>
+    <a href="#s4-1" class="toc-h2">4.1 顶部等级卡片</a>
+    <a href="#s4-2" class="toc-h2">4.2 Tab导航与红点</a>
+    <a href="#s4-3" class="toc-h2">4.3 Bônus晋级奖励</a>
+    <a href="#s4-4" class="toc-h2">4.4 日/周/月奖励</a>
+    <a href="#s4-5" class="toc-h2">4.5 保级说明（新增）</a>
+    <a href="#s4-6" class="toc-h2">4.6 按钮状态与弹窗</a>
+    <a href="#s5" class="toc-h1">五、关键交互流程</a>
+    <a href="#s6" class="toc-h1">六、数据字段字典</a>
+    <a href="#s7" class="toc-h1">七、异常与边界情况</a>
+    <a href="#s8" class="toc-h1">八、验收标准</a>
+    <a href="#s9" class="toc-h1">九、附录</a>
+  </nav>
+
+  <div class="main" id="top">
+
+    <div class="cover">
+      <h1>VIP客户端页面</h1>
+      <div class="subtitle">产品需求文档（PRD）</div>
+      <div class="desc">对标 Panda 客户端 VIP 页面的补充迭代设计</div>
+    </div>
+
+    <table>
+      <tr><th>项目</th><th>内容</th></tr>
+      <tr><td>文档名称</td><td>VIP客户端页面产品需求文档（PRD）</td></tr>
+      <tr><td>所属模块</td><td>客户端App / VIP页面</td></tr>
+      <tr><td>版本号</td><td>V1.0</td></tr>
+      <tr><td>状态</td><td>待评审</td></tr>
+      <tr><td>关联原型</td><td>VIP客户端页面迭代原型.html（高保真可交互原型）</td></tr>
+      <tr><td>关联文档</td><td>VIP管理后台产品需求文档PRD（后台配置侧对应文档）</td></tr>
+    </table>
+
+    <h1 id="s1">一、需求背景与目标</h1>
+
+    <h2 id="s1-1">1.1 背景</h2>
+    <p>当前 DD.GG 客户端 VIP 页面仅包含"Bônus""Bônus Diário""Bônus Semanal""Bônus Mensal"四个页签，缺少 Panda 客户端已有的"Instruções para manter o nível"（保级说明）页签，用户无法在客户端直接查看保级规则、保级等级表和完整的VIP规则说明。此外，现有奖励领取按钮缺乏清晰的状态区分（是否达标可领取），也没有对应的引导/成功反馈弹窗。</p>
+
+    <h2 id="s1-2">1.2 目标</h2>
+    <ul>
+      <li>补充"Instruções para manter o nível"页签，对齐 Panda 客户端的保级说明呈现</li>
+      <li>完善奖励领取按钮的状态设计：区分"未达标禁用"与"已达标可领取"，并细化已达标后的二次校验逻辑</li>
+      <li>补充两个关键弹窗：充值引导弹窗、领取成功弹窗</li>
+      <li>明确规则文案中哪些内容为静态模板、哪些内容需与后台配置动态绑定（稽核倍数、生效场馆等）</li>
+    </ul>
+
+    <h1 id="s2">二、功能范围概览</h1>
+    <table>
+      <tr><th>模块</th><th>功能点</th><th>优先级</th></tr>
+      <tr><td>Tab导航</td><td>新增"Instruções para manter o nível"页签；未领取奖励的页签加红点提示</td><td>P0</td></tr>
+      <tr><td>保级说明页面</td><td>保级规则文案、保级等级表（按等级动态生成）、完整VIP规则说明文案</td><td>P0</td></tr>
+      <tr><td>动态数据绑定</td><td>规则文案中的"稽核倍数""生效场馆"需读取后台配置动态生成</td><td>P0</td></tr>
+      <tr><td>领取按钮状态</td><td>未达标（禁用，不可点击）/ 已达标（可点击，二次校验充值情况）两级状态</td><td>P0</td></tr>
+      <tr><td>弹窗补充</td><td>充值引导弹窗（未充值时）、领取成功弹窗（已充值时）</td><td>P0</td></tr>
+      <tr><td>晋级进度展示</td><td>晋级奖励Tab中，当前在途等级展示流水进度条</td><td>P1</td></tr>
+    </table>
+
+    <h1 id="s3">三、页面结构总览</h1>
+    <p>页面路径：客户端 App ＞ 我的 ＞ VIP。页面自上而下分为：① 顶部等级卡片（当前等级、下一等级所需流水、Coletar Tudo/Histórias入口）② Tab导航栏（Bônus / Bônus Diário / Bônus Semanal / Bônus Mensal / Instruções para manter o nível）③ 对应Tab的内容区。</p>
+    <ul>
+      <li>Bônus：晋级奖励列表，含当前在途等级的进度条</li>
+      <li>Bônus Diário / Semanal / Mensal：对应周期的等级礼金列表 + 领取按钮</li>
+      <li>Instruções para manter o nível：本次新增，含保级规则说明、保级等级表、完整VIP规则说明</li>
+    </ul>
+    <div class="quote">Tab栏支持横向滚动；当某个Tab下存在"已达标可领取"的奖励时，Tab文字右侧显示红色提示点，未领取状态解除后红点自动消失。</div>
+
+    <h1 id="s4">四、功能详细设计</h1>
+
+    <h2 id="s4-1">4.1 顶部等级卡片</h2>
+    <p class="field-label"><b>功能说明：</b>展示用户当前VIP等级、距下一等级所需流水，并提供快捷入口。</p>
+    <table>
+      <tr><th>字段/元素</th><th>说明</th></tr>
+      <tr><td>Nível Atual 标签</td><td>红色角标，标注当前等级卡片状态</td></tr>
+      <tr><td>等级图标 + 等级号</td><td>圆形皇冠图标，图标颜色随等级区间变化（如V0-V2银色、V3+金铜色）</td></tr>
+      <tr><td>Siga VIPx</td><td>提示用户当前正在向哪个等级迈进</td></tr>
+      <tr><td>Ainda precisa apostar</td><td>距下一等级所需的剩余流水金额，读取「晋级需流水－当前累计流水」</td></tr>
+      <tr><td>Coletar Tudo</td><td>一键领取入口，点击后走与其他领取按钮相同的二次校验逻辑（见4.6）</td></tr>
+      <tr><td>Histórias</td><td>跳转历史领取记录页（本期不展开设计）</td></tr>
+    </table>
+
+    <h2 id="s4-2">4.2 Tab导航与红点提示</h2>
+    <ul>
+      <li>Tab顺序：Bônus / Bônus Diário / Bônus Semanal / Bônus Mensal / Instruções para manter o nível</li>
+      <li>当前Tab有可领取（已达标）奖励时，Tab文字右侧显示红色圆点；无可领取奖励时不显示</li>
+      <li>「Instruções para manter o nível」为纯说明性页签，不产生红点提示</li>
+    </ul>
+
+    <h2 id="s4-3">4.3 Bônus（晋级奖励）</h2>
+    <p class="field-label"><b>功能说明：</b>展示各等级的晋级所需流水与晋级奖励金额，并对当前"在途"等级展示实时进度。</p>
+    <ul>
+      <li>列表字段：等级、晋级所需流水（或进度条）、晋级奖励金额</li>
+      <li>当前用户正在冲刺的等级，<b>所需流水列展示为进度条</b>，下方附文字"已完成金额 / 所需金额"</li>
+      <li>底部「Reclamar Recompensa de Upgrade」按钮，状态逻辑见4.6</li>
+    </ul>
+
+    <h2 id="s4-4">4.4 Bônus Diário / Semanal / Mensal</h2>
+    <p class="field-label"><b>功能说明：</b>分别展示日/周/月礼金在各等级下的金额，供用户对照当前等级查看可得奖励。</p>
+    <ul>
+      <li>列表字段：等级、对应周期奖励金额</li>
+      <li>底部分别为「Reivindicar Recompensa Diária / Semanal / Mensal」按钮，状态逻辑见4.6</li>
+    </ul>
+
+    <h2 id="s4-5">4.5 Instruções para manter o nível（保级说明，本次新增）</h2>
+    <p class="field-label"><b>功能说明：</b>补充客户端保级相关的规则说明与等级表，对齐 Panda 客户端呈现。</p>
+
+    <h3>4.5.1 保级规则文案</h3>
+    <p>固定展示以下三段说明（读取后台「规则说明→保级说明」的默认文案或自定义富文本）：</p>
+    <ul>
+      <li>1. 保级判定时点与规则：每月1号00:00判定，上月充值/流水达标则保级成功，否则降1级</li>
+      <li>2. 降级后重新达标的处理：需重新累计充值/流水才能再次晋级，且晋级奖励不重复发放</li>
+      <li>3. 当月内的补救说明：当月内重新达到原等级要求可恢复，但同样不重复发放晋级奖励</li>
+    </ul>
+    <div class="quote">该三段文案的具体措辞以后台「规则说明→保级说明」实际配置内容为准（默认或运营自定义的富文本），此处仅描述其功能定位。</div>
+
+    <h3>4.5.2 保级等级表（Tabela de níveis de manutenção）</h3>
+    <p>展示各VIP等级对应的保级门槛，字段：等级、保级需充值、保级需流水。</p>
+    <div class="quote">数据来源：后台「VIP等级配置」中每个等级的「保级需充值」「保级需流水」字段，逐级取值；表格行数与后台实际配置的等级数量一致（新增/删除等级会同步影响此表行数）。</div>
+
+    <h3>4.5.3 Instruções sobre regras VIP（完整规则说明）</h3>
+    <p>在保级等级表下方，展示完整的VIP规则说明文案，包含晋级说明、日/周/月奖励说明、奖励过期处理、稽核说明、活动声明、解释权声明。其中两处内容需与后台配置动态绑定：</p>
+    <table>
+      <tr><th>文案片段</th><th>动态数据来源</th></tr>
+      <tr><td>"rollover Nx"（稽核倍数）</td><td>读取后台「等级条件与流水稽核」中配置的「稽核倍数」字段，N随后台配置实时变化</td></tr>
+      <tr><td>"Slot：[平台清单]"（生效场馆）</td><td>读取客户端「生效场馆」配置，与后台「稽核限定平台」勾选结果联动；若后台选择"不限制"，此处应展示"不限制游戏平台"或隐藏该句</td></tr>
+    </table>
+    <div class="quote">活动声明、解释权声明两段为固定合规文案，不随任何后台配置变化。</div>
+
+    <h2 id="s4-6">4.6 领取按钮状态与弹窗逻辑</h2>
+    <p class="field-label"><b>按钮状态说明：</b></p>
+    <table>
+      <tr><th>状态</th><th>视觉表现</th><th>可点击性</th><th>点击后行为</th></tr>
+      <tr><td>未达标</td><td>灰色/暗橄榄色，文字降低对比度</td><td>不可点击（禁用）</td><td>无任何响应，不弹窗</td></tr>
+      <tr><td>已达标 - 区间内未充值</td><td>高亮黄色，与已充值状态视觉一致</td><td>可点击</td><td>弹出「充值引导弹窗」，提示完成任意充值后可领取</td></tr>
+      <tr><td>已达标 - 区间内已充值</td><td>高亮黄色</td><td>可点击</td><td>弹出「领取成功弹窗」，展示到账金额</td></tr>
+    </table>
+    <div class="quote">关键说明："已达标"仅代表流水/等级等基础条件已满足，按钮因此保持高亮可点击；但点击后是否真正发放奖励，还需二次校验"统计区间内是否有充值行为"这一独立条件。两种已达标状态在按钮外观上没有区别，用户需点击后才能得知具体结果。</div>
+
+    <p class="field-label"><b>弹窗一：充值引导弹窗</b></p>
+    <ul>
+      <li>触发条件：按钮为"已达标"状态，但点击时校验到区间内未充值</li>
+      <li>内容：插画 + 文案"Receba uma recompensa exclusiva após efetuar qualquer depósito."</li>
+      <li>按钮：「Depósito」（主按钮，跳转充值页）、「Cancelar」（次按钮，关闭弹窗）</li>
+    </ul>
+
+    <p class="field-label"><b>弹窗二：领取成功弹窗</b></p>
+    <ul>
+      <li>触发条件：按钮为"已达标"状态，且点击时校验到区间内已充值</li>
+      <li>内容：成功图标（绿色对勾）+ 文案"Recompensa recebida com sucesso!" + 到账金额</li>
+      <li>按钮：「Confirmar」，点击关闭弹窗</li>
+    </ul>
+
+    <h1 id="s5">五、关键交互流程</h1>
+
+    <h2>5.1 点击奖励领取按钮的完整判断流程</h2>
+    <ul>
+      <li>① 用户点击某个奖励领取按钮</li>
+      <li>② 若按钮为"未达标"禁用状态 → 无任何响应，流程结束</li>
+      <li>③ 若按钮为"已达标"状态 → 系统校验"当前统计区间内是否有充值行为"</li>
+      <li>④ 校验结果为"未充值" → 弹出充值引导弹窗，用户可选择去充值或取消</li>
+      <li>⑤ 校验结果为"已充值" → 直接发放对应奖励，弹出领取成功弹窗，展示到账金额</li>
+    </ul>
+
+    <h2>5.2 Instruções para manter o nível 页签加载流程</h2>
+    <ul>
+      <li>① 用户切换到「Instruções para manter o nível」页签</li>
+      <li>② 页面加载后台「规则说明→保级说明」的当前文案（默认或自定义富文本）</li>
+      <li>③ 加载「VIP等级配置」中所有等级的保级需充值/需流水，渲染保级等级表</li>
+      <li>④ 加载完整VIP规则说明文案，其中"稽核倍数""生效场馆"两处按当前后台配置动态填充后展示</li>
+    </ul>
+
+    <h1 id="s6">六、数据字段字典</h1>
+    <table>
+      <tr><th>字段</th><th>类型</th><th>来源</th><th>说明</th></tr>
+      <tr><td>Ainda precisa apostar</td><td>金额</td><td>计算得出</td><td>晋级需流水 － 当前累计流水，实时计算</td></tr>
+      <tr><td>保级等级表行数据</td><td>数字</td><td>VIP等级配置</td><td>逐级取「保级需充值」「保级需流水」，行数=后台配置的等级总数</td></tr>
+      <tr><td>rollover Nx（稽核倍数）</td><td>整数</td><td>后台稽核倍数配置</td><td>全局统一配置，直接展示为"rollover Nx"</td></tr>
+      <tr><td>Slot：[平台清单]（生效场馆）</td><td>文本列表</td><td>客户端生效场馆/后台稽核限定平台</td><td>与后台勾选结果联动；"不限制"时展示方式需与产品确认</td></tr>
+      <tr><td>领取按钮状态</td><td>枚举：未达标/已达标未充值/已达标已充值</td><td>综合计算</td><td>由等级流水达标情况 + 区间内是否充值两个条件共同决定</td></tr>
+      <tr><td>到账金额（领取成功弹窗）</td><td>金额</td><td>对应奖励配置</td><td>展示本次实际发放的奖励金额</td></tr>
+    </table>
+
+    <h1 id="s7">七、异常与边界情况</h1>
+    <table>
+      <tr><th>场景</th><th>处理方式</th></tr>
+      <tr><td>用户在充值引导弹窗中点击「Depósito」后未完成充值</td><td>返回VIP页面时按钮仍为"已达标未充值"状态，可再次点击触发同样的引导弹窗</td></tr>
+      <tr><td>后台「稽核限定平台」设置为"不限制"</td><td>规则文案中的Slot清单需替换为"不限制游戏平台"或整句隐藏，避免展示空列表</td></tr>
+      <tr><td>后台等级数量发生变更（新增/删除）</td><td>客户端保级等级表需实时同步行数，不需要客户端单独维护等级数据</td></tr>
+      <tr><td>用户在同一天内连续跨越多个等级</td><td>晋级奖励按4.3/5.1规则持续累加，点击领取时一次性合并发放</td></tr>
+      <tr><td>规则说明富文本内容包含链接/列表等复杂排版</td><td>客户端需支持富文本渲染，而非纯文本展示，避免格式丢失</td></tr>
+    </table>
+
+    <h1 id="s8">八、验收标准</h1>
+    <ul>
+      <li>☐ 客户端VIP页面新增「Instruções para manter o nível」页签，且位于Tab导航最后一位</li>
+      <li>☐ 保级等级表行数与后台「VIP等级配置」的等级数量一致，数值正确对应"保级需充值/需流水"</li>
+      <li>☐ 规则说明文案中的"rollover Nx"与后台「稽核倍数」配置值一致，修改后台配置后客户端展示同步更新</li>
+      <li>☐ 规则说明文案中的"Slot：[平台清单]"与后台「稽核限定平台」勾选结果一致</li>
+      <li>☐ 未达标的领取按钮为禁用态，点击无任何响应，不弹出任何弹窗</li>
+      <li>☐ 已达标且区间内未充值时，点击按钮弹出充值引导弹窗，而非直接发放奖励</li>
+      <li>☐ 已达标且区间内已充值时，点击按钮弹出领取成功弹窗，并展示正确的到账金额</li>
+      <li>☐ 有可领取奖励的Tab正确显示红点提示，领取/条件变化后红点能正确消失</li>
+      <li>☐ Bônus页签中在途等级的进度条数值与实际累计流水/所需流水一致</li>
+    </ul>
+
+    <h1 id="s9">九、附录</h1>
+    <h2>9.1 需求确认结论汇总</h2>
+    <table>
+      <tr><th>序号</th><th>事项</th><th>结论</th></tr>
+      <tr><td>1</td><td>未达标按钮是否可点击</td><td>不可点击，按钮禁用，点击无任何响应，不弹出任何弹窗</td></tr>
+      <tr><td>2</td><td>已达标按钮点击后的判断逻辑</td><td>二次校验统计区间内是否有充值行为：已充值→领取成功；未充值→先引导充值</td></tr>
+      <tr><td>3</td><td>稽核倍数在客户端如何展示</td><td>以"rollover Nx"形式展示，N读取后台稽核倍数配置，非固定文案</td></tr>
+      <tr><td>4</td><td>生效场馆Slot清单如何展示</td><td>读取客户端生效场馆配置，与后台稽核限定平台勾选结果联动</td></tr>
+      <tr><td>5</td><td>保级等级表数据来源</td><td>后台VIP等级配置中逐级的「保级需充值」「保级需流水」字段，行数随后台配置动态变化</td></tr>
+    </table>
+
+    <hr class="sep">
+    <p style="color:var(--faint); font-size:12px;">本页面由 VIP客户端页面产品需求文档（PRD）V1.0 转换生成，内容以此页面与关联原型为准。</p>
+
+  </div>
+</div>
+</body>
+</html>
