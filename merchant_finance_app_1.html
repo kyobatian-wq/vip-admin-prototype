@@ -1400,7 +1400,8 @@ let data = [
     amount:800, fee:0, actual:800, created:'2026-07-07 03:09:02', bindName:'Gerson Jos',
     bankType:'PHONE', acct:'6599340383', payMethod:'PIX', payChannel:'', firstOut:'是',
     status:'审核中', reviewType:'免审不通过',
-    note:'自动代付锁定订单，锁定期间（5分钟）内不可解锁；免审条件不过，检查用户是否首次提现：true，转人工审核',
+    opNote:'自动代付锁定订单，锁定期间（5分钟）内不可解锁；免审条件不过，检查用户是否首次提现：true，转人工审核',
+    orderNote:'',
     invite:'-', cpf:'69231010182',
     locked:false, lockedBy:null
   },
@@ -1410,7 +1411,8 @@ let data = [
     amount:800, fee:0, actual:800, created:'2026-07-07 00:25:00', bindName:'Ana Souza',
     bankType:'PHONE', acct:'5599112233', payMethod:'PIX', payChannel:'', firstOut:'否',
     status:'待审核', reviewType:'免审不通过',
-    note:'免审条件不过，检测到用户在过去60分钟内领取佣金3次（≥2次阈值），转人工审核',
+    opNote:'免审条件不过，检测到用户在过去60分钟内领取佣金3次（≥2次阈值），转人工审核',
+    orderNote:'',
     invite:'-', cpf:'52931010111',
     locked:true, lockedBy:'axingkefu'
   },
@@ -1420,7 +1422,8 @@ let data = [
     amount:50, fee:0, actual:50, created:'2026-07-07 00:24:40', bindName:'João Lima',
     bankType:'PHONE', acct:'5599004411', payMethod:'PIX', payChannel:'', firstOut:'是',
     status:'待审核', reviewType:'免审不通过',
-    note:'免审条件不过，检查用户是否首次提现：true；系统识别到该用户在套利平台使用了邀请奖金，已从账户扣除相应奖金及获利金额',
+    opNote:'免审条件不过，检查用户是否首次提现：true；系统识别到该用户在套利平台使用了邀请奖金，已从账户扣除相应奖金及获利金额',
+    orderNote:'',
     invite:'-', cpf:'11223344556',
     locked:true, lockedBy:'axingkefu'
   },
@@ -1430,7 +1433,8 @@ let data = [
     amount:20, fee:0, actual:20, created:'2026-07-07 00:24:10', bindName:'Carla Dias',
     bankType:'PHONE', acct:'5599887766', payMethod:'PIX', payChannel:'', firstOut:'否',
     status:'待审核', reviewType:'',
-    note:'订单已生成，等待系统免审判定',
+    opNote:'订单已生成，等待系统免审判定',
+    orderNote:'',
     invite:'-', cpf:'99887766554',
     locked:true, lockedBy:'axingkefu'
   },
@@ -1440,7 +1444,8 @@ let data = [
     amount:20, fee:0, actual:20, created:'2026-07-07 00:18:04', bindName:'Paulo Sérgio',
     bankType:'PHONE', acct:'27981286987', payMethod:'PIX', payChannel:'', firstOut:'否',
     status:'待审核', reviewType:'',
-    note:'订单已生成，等待系统免审判定',
+    opNote:'订单已生成，等待系统免审判定',
+    orderNote:'',
     invite:'-', cpf:'12345678900',
     locked:false, lockedBy:null
   },
@@ -1483,7 +1488,7 @@ function render(){
       <td>${row.firstOut}</td>
       <td><span class="status-pill ${statusClass}">${row.status}</span></td>
       <td>${row.reviewType ? `<span class="badge">${row.reviewType}</span>` : '-'}</td>
-      <td>${renderNoteCell(row.note)}</td>
+      <td>${renderNoteCell(row.opNote)}</td>
       <td>${row.invite}</td>
       <td>${row.cpf}</td>
       <td><div class="actions">${renderActions(row, i)}</div></td>
@@ -1534,7 +1539,6 @@ function hideActTip(){
 function showTextTip(el, text){
   const tip = document.getElementById('textTooltip');
   tip.textContent = text;
-  tip.style.display = 'block';
   const rect = el.getBoundingClientRect();
   const left = Math.min(Math.max(rect.left, 10), window.innerWidth - 450);
   tip.style.left = left + 'px';
@@ -1554,8 +1558,8 @@ function renderNoteCell(note){
   const short = note.slice(0, 14) + '...';
   return `<span class="note-trunc" onmouseenter="showTextTip(this,'${escNote(note)}')" onmouseleave="hideTextTip()">${short}</span>`;
 }
-function appendNote(row, entry){
-  row.note = row.note ? (row.note + '；' + entry) : entry;
+function appendNote(row, field, entry){
+  row[field] = row[field] ? (row[field] + '；' + entry) : entry;
 }
 
 function toggleAll(el){
@@ -1595,7 +1599,7 @@ function refreshStatus(i){
   if(data[i].status === '代付中'){
     const roll = Math.random();
     data[i].status = roll < 0.7 ? '代付成功' : (roll < 0.9 ? '代付失败' : '代付异常');
-    appendNote(data[i], '渠道：' + (data[i].payChannel || '-') + ' [' + data[i].status + ']');
+    appendNote(data[i], 'opNote', '渠道：' + (data[i].payChannel || '-') + ' [' + data[i].status + ']');
     render();
   }
   showToast('已拉取最新订单状态：' + data[i].status);
@@ -1614,13 +1618,15 @@ function openReject(indices){
   document.getElementById('rejectOverlay').classList.add('show');
 }
 function confirmReject(){
-  const opNote = document.getElementById('rejectOpNote').value.trim();
+  const opNoteVal = document.getElementById('rejectOpNote').value.trim();
+  const orderNoteVal = document.getElementById('rejectOrderNote').value.trim();
   const count = pendingRejectIndices.length;
   pendingRejectIndices
     .slice()
     .sort((a,b) => b - a)
     .forEach(i => {
-      appendNote(data[i], '人工拒绝（操作人：axingkefu）' + (opNote ? '：' + opNote : ''));
+      appendNote(data[i], 'opNote', '人工拒绝（操作人：axingkefu）' + (opNoteVal ? '：' + opNoteVal : ''));
+      if(orderNoteVal) appendNote(data[i], 'orderNote', orderNoteVal);
       data.splice(i, 1);
     });
   render();
@@ -1636,13 +1642,15 @@ function openForfeit(indices){
   document.getElementById('forfeitOverlay').classList.add('show');
 }
 function confirmForfeit(){
-  const opNote = document.getElementById('forfeitOpNote').value.trim();
+  const opNoteVal = document.getElementById('forfeitOpNote').value.trim();
+  const orderNoteVal = document.getElementById('forfeitOrderNote').value.trim();
   const count = pendingForfeitIndices.length;
   pendingForfeitIndices
     .slice()
     .sort((a,b) => b - a)
     .forEach(i => {
-      appendNote(data[i], '人工罚没（操作人：axingkefu）' + (opNote ? '：' + opNote : ''));
+      appendNote(data[i], 'opNote', '人工罚没（操作人：axingkefu）' + (opNoteVal ? '：' + opNoteVal : ''));
+      if(orderNoteVal) appendNote(data[i], 'orderNote', orderNoteVal);
       data.splice(i, 1);
     });
   render();
@@ -1658,13 +1666,15 @@ function openManual(indices){
   document.getElementById('manualOverlay').classList.add('show');
 }
 function confirmManual(){
-  const opNote = document.getElementById('manualOpNote').value.trim();
+  const opNoteVal = document.getElementById('manualOpNote').value.trim();
+  const orderNoteVal = document.getElementById('manualOrderNote').value.trim();
   const count = pendingManualIndices.length;
   pendingManualIndices
     .slice()
     .sort((a,b) => b - a)
     .forEach(i => {
-      appendNote(data[i], '人工完成（操作人：axingkefu）' + (opNote ? '：' + opNote : ''));
+      appendNote(data[i], 'opNote', '人工完成（操作人：axingkefu）' + (opNoteVal ? '：' + opNoteVal : ''));
+      if(orderNoteVal) appendNote(data[i], 'orderNote', orderNoteVal);
       data.splice(i, 1);
     });
   render();
@@ -1740,7 +1750,7 @@ function doPay(){
     data[i].payChannel = ch.name;
     data[i].payOrder = 'PO_260707' + Math.random().toString(16).slice(2,18);
     data[i].status = '代付中';
-    appendNote(data[i], '已发起代付，提现渠道：' + ch.name + '，渠道：' + ch.name);
+    appendNote(data[i], 'opNote', '已发起代付，提现渠道：' + ch.name + '，渠道：' + ch.name);
     return `<tr>
       <td>${idx+1}</td>
       <td><span class="result-ok">✓ 成功</span></td>
@@ -1775,7 +1785,8 @@ function showDetail(i, processMode){
     <tr><td>提现金额：</td><td>${row.amount}</td></tr>
     <tr><td>手续费：</td><td>${row.fee}</td></tr>
     <tr><td>实际出款：</td><td>${row.actual}</td></tr>
-    <tr><td>操作备注：</td><td style="white-space:normal; line-height:1.6;">${row.note || '-'}</td></tr>
+    <tr><td>操作备注：</td><td style="white-space:normal; line-height:1.6;">${row.opNote || '-'}</td></tr>
+    <tr><td>订单备注：</td><td style="white-space:normal; line-height:1.6;">${row.orderNote || '-'}</td></tr>
   `;
   const plClass = (v) => v >= 0 ? 'stat-win' : 'stat-loss';
   document.getElementById('detailStatTable').innerHTML = `
@@ -1969,7 +1980,8 @@ const totalData = [
     bindName:'Vitoria', cpf:'22668083783', bankType:'PHONE', payMethod:'PIX',
     handleMethod:'PIX代付', payChannel:'Bestpay代付', firstOut:'否', status:'已完成',
     acct:'21989983838', created:'2026-06-30 23:59:43', finished:'2026-06-30 23:59:52',
-    orderNote:'自动代付锁定订单，锁定期间（5分钟）内不可解锁自动提现，修改为代付中；已发起代付，提现渠道：Bestpay代付，渠道：Bestpay代付 [代付成功]'
+    opNote:'自动代付锁定订单，锁定期间（5分钟）内不可解锁自动提现，修改为代付中；已发起代付，提现渠道：Bestpay代付，渠道：Bestpay代付 [代付成功]',
+    orderNote:'-'
   },
   {
     id:'3438012520', account_no:'55996476463', invite:'-', operator:'axingkefu',
@@ -1978,7 +1990,8 @@ const totalData = [
     bindName:'Juliano', cpf:'02558073095', bankType:'CPF', payMethod:'PIX',
     handleMethod:'PIX代付', payChannel:'Bestpay代付', firstOut:'否', status:'已完成',
     acct:'02558073095', created:'2026-06-30 23:58:50', finished:'2026-06-30 23:59:28',
-    orderNote:'免审条件不过，检测到用户在过去60分钟内领取佣金2次（≥2次阈值），转人工审核；人工审核通过，操作人：axingkefu；已发起代付，渠道：Bestpay代付 [代付成功]'
+    opNote:'免审条件不过，检测到用户在过去60分钟内领取佣金2次（≥2次阈值），转人工审核；人工审核通过，操作人：axingkefu；已发起代付，渠道：Bestpay代付 [代付成功]',
+    orderNote:'已电话核实用户身份，佣金来源正常'
   },
   {
     id:'3718431411', account_no:'93991342061', invite:'-', operator:'system',
@@ -1987,7 +2000,8 @@ const totalData = [
     bindName:'sandrovale de J', cpf:'00694284254', bankType:'CPF', payMethod:'PIX',
     handleMethod:'PIX代付', payChannel:'Bestpay代付', firstOut:'否', status:'已完成',
     acct:'00694284254', created:'2026-06-30 23:58:30', finished:'2026-06-30 23:58:36',
-    orderNote:'自动代付锁定订单，锁定期间（5分钟）内不可解锁自动提现，修改为代付中；已发起代付，提现渠道：Bestpay代付，渠道：Bestpay代付 [代付成功]'
+    opNote:'自动代付锁定订单，锁定期间（5分钟）内不可解锁自动提现，修改为代付中；已发起代付，提现渠道：Bestpay代付，渠道：Bestpay代付 [代付成功]',
+    orderNote:'-'
   },
   {
     id:'3883306961', account_no:'66992821045', invite:'-', operator:'system',
@@ -1996,7 +2010,8 @@ const totalData = [
     bindName:'matheus', cpf:'06241162128', bankType:'CPF', payMethod:'PIX',
     handleMethod:'PIX代付', payChannel:'Bestpay代付', firstOut:'否', status:'已完成',
     acct:'06241162128', created:'2026-06-30 23:55:30', finished:'2026-06-30 23:55:36',
-    orderNote:'自动代付锁定订单，锁定期间（5分钟）内不可解锁自动提现，修改为代付中；已发起代付，提现渠道：Bestpay代付，渠道：Bestpay代付 [代付成功]'
+    opNote:'自动代付锁定订单，锁定期间（5分钟）内不可解锁自动提现，修改为代付中；已发起代付，提现渠道：Bestpay代付，渠道：Bestpay代付 [代付成功]',
+    orderNote:'-'
   },
   {
     id:'3348484652', account_no:'11971246997', invite:'3605442618', operator:'axingkefu',
@@ -2005,7 +2020,8 @@ const totalData = [
     bindName:'carlos Alberto', cpf:'49798346807', bankType:'CPF', payMethod:'PIX',
     handleMethod:'PIX代付', payChannel:'Bestpay代付', firstOut:'是', status:'已完成',
     acct:'49798346807', created:'2026-06-30 23:55:21', finished:'2026-06-30 23:56:25',
-    orderNote:'免审条件不过，检查用户是否首次提现：true，转人工审核；人工审核通过，操作人：axingkefu；已发起代付，渠道：Bestpay代付 [代付成功]'
+    opNote:'免审条件不过，检查用户是否首次提现：true，转人工审核；人工审核通过，操作人：axingkefu；已发起代付，渠道：Bestpay代付 [代付成功]',
+    orderNote:'-'
   },
   {
     id:'3982120268', account_no:'22996069857', invite:'-', operator:'system',
@@ -2014,7 +2030,8 @@ const totalData = [
     bindName:'ELINELE', cpf:'08907373710', bankType:'CPF', payMethod:'PIX',
     handleMethod:'PIX代付', payChannel:'Bestpay代付', firstOut:'否', status:'已完成',
     acct:'08907373710', created:'2026-06-30 23:54:35', finished:'2026-06-30 23:54:41',
-    orderNote:'自动代付锁定订单，锁定期间（5分钟）内不可解锁自动提现，修改为代付中；已发起代付，提现渠道：Bestpay代付，渠道：Bestpay代付 [代付成功]'
+    opNote:'自动代付锁定订单，锁定期间（5分钟）内不可解锁自动提现，修改为代付中；已发起代付，提现渠道：Bestpay代付，渠道：Bestpay代付 [代付成功]',
+    orderNote:'-'
   },
   {
     id:'3503879751', account_no:'19989867245', invite:'3283961173', operator:'system',
@@ -2023,7 +2040,8 @@ const totalData = [
     bindName:'Andreza', cpf:'26245772893', bankType:'CPF', payMethod:'PIX',
     handleMethod:'PIX代付', payChannel:'Bestpay代付', firstOut:'否', status:'已完成',
     acct:'26245772893', created:'2026-06-30 23:53:42', finished:'2026-06-30 23:53:48',
-    orderNote:'自动代付锁定订单，锁定期间（5分钟）内不可解锁自动提现，修改为代付中；已发起代付，提现渠道：Bestpay代付，渠道：Bestpay代付 [代付成功]'
+    opNote:'自动代付锁定订单，锁定期间（5分钟）内不可解锁自动提现，修改为代付中；已发起代付，提现渠道：Bestpay代付，渠道：Bestpay代付 [代付成功]',
+    orderNote:'-'
   },
   {
     id:'3703838332', account_no:'82993565030', invite:'3106573329', operator:'axingkefu',
@@ -2032,7 +2050,8 @@ const totalData = [
     bindName:'Carlos Eduardo', cpf:'14113715424', bankType:'CPF', payMethod:'PIX',
     handleMethod:'PIX代付', payChannel:'Bestpay代付', firstOut:'是', status:'已完成',
     acct:'14113715424', created:'2026-06-30 23:51:43', finished:'2026-06-30 23:52:24',
-    orderNote:'免审条件不过，检查用户是否首次提现：true，转人工审核；人工审核通过，操作人：SiteFrank01；已发起代付，渠道：Bestpay代付 [代付成功]'
+    opNote:'免审条件不过，检查用户是否首次提现：true，转人工审核；人工审核通过，操作人：SiteFrank01；已发起代付，渠道：Bestpay代付 [代付成功]',
+    orderNote:'-'
   }
 ];
 
@@ -2091,6 +2110,7 @@ function showTotalDetail(i){
     <tr><td>处理方式：</td><td>${row.handleMethod}</td></tr>
     <tr><td>创建时间：</td><td>${row.created}</td></tr>
     <tr><td>完成时间：</td><td>${row.finished}</td></tr>
+    <tr><td>操作备注：</td><td style="white-space:normal; line-height:1.6;">${row.opNote || '-'}</td></tr>
     <tr><td>订单备注：</td><td style="white-space:normal; line-height:1.6;">${row.orderNote || '-'}</td></tr>
   `;
   const plClass = (v) => v >= 0 ? 'stat-win' : 'stat-loss';
