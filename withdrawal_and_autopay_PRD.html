@@ -15,7 +15,26 @@
     font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
     line-height:1.7; font-size:14.5px;
   }
-  .doc{max-width:960px; margin:0 auto; padding:48px 56px 100px; background:#fff; box-shadow:0 0 0 1px var(--border);}
+  .layout{display:flex; align-items:flex-start; max-width:1240px; margin:0 auto;}
+
+  .sidebar-toc{
+    position:sticky; top:0; height:100vh; overflow-y:auto; flex:0 0 250px; width:250px;
+    background:#fff; border-right:1px solid var(--border); padding:28px 20px 40px;
+  }
+  .sidebar-toc .toc-title{
+    font-size:11px; font-weight:700; letter-spacing:1px; color:var(--dim); text-transform:uppercase;
+    margin-bottom:14px;
+  }
+  .sidebar-toc ol{list-style:none; margin:0; padding:0;}
+  .sidebar-toc li{margin:0;}
+  .sidebar-toc a{
+    display:block; padding:8px 10px; border-radius:5px; color:var(--text); text-decoration:none;
+    font-size:13px; line-height:1.4; border-left:2px solid transparent;
+  }
+  .sidebar-toc a:hover{background:#f2f4f7; color:var(--primary);}
+  .sidebar-toc a.active{background:#eaf1ff; color:var(--primary); border-left-color:var(--primary); font-weight:600;}
+
+  .doc{flex:1; min-width:0; max-width:960px; margin:0; padding:48px 56px 100px; background:#fff; box-shadow:0 0 0 1px var(--border);}
 
   .cover{border-bottom:3px solid var(--primary); padding-bottom:28px; margin-bottom:36px;}
   .cover .kicker{color:var(--primary); font-weight:600; font-size:13px; letter-spacing:1px; text-transform:uppercase;}
@@ -56,15 +75,6 @@
   .callout.warn{border-left-color:var(--warn); background:#fdf6ec;}
   .callout.danger{border-left-color:var(--danger); background:#fdf1ee;}
 
-  .toc{
-    background:#fafbfc; border:1px solid var(--border); border-radius:6px; padding:20px 24px; margin:20px 0 10px;
-  }
-  .toc h2{border:none; margin:0 0 12px; font-size:16px;}
-  .toc ol{margin:0; padding-left:20px; columns:2; column-gap:40px;}
-  .toc li{margin:5px 0; break-inside:avoid;}
-  .toc a{color:var(--text); text-decoration:none; font-size:13.5px;}
-  .toc a:hover{color:var(--primary); text-decoration:underline;}
-
   .module-tag{
     display:inline-block; font-size:11px; font-weight:700; color:#fff; background:var(--primary);
     padding:2px 8px; border-radius:3px; margin-right:8px; vertical-align:middle;
@@ -91,6 +101,25 @@
 </style>
 </head>
 <body>
+<div class="layout">
+
+  <nav class="sidebar-toc" id="sidebarToc">
+    <div class="toc-title">目录</div>
+    <ol>
+      <li><a href="#bg" data-sec="bg">1. 背景与目标</a></li>
+      <li><a href="#scope" data-sec="scope">2. 名词与范围</a></li>
+      <li><a href="#nav" data-sec="nav">3. 全局导航结构</a></li>
+      <li><a href="#m1" data-sec="m1">4. 待审核出款订单</a></li>
+      <li><a href="#m2" data-sec="m2">5. 已审核出款订单</a></li>
+      <li><a href="#m3" data-sec="m3">6. 总出款记录</a></li>
+      <li><a href="#m4" data-sec="m4">7. 提现管理（自动代付配置）</a></li>
+      <li><a href="#m5" data-sec="m5">8. 代付商户管理</a></li>
+      <li><a href="#global" data-sec="global">9. 全局交互规范</a></li>
+      <li><a href="#dict" data-sec="dict">10. 数据字典 / 状态枚举</a></li>
+      <li><a href="#nfr" data-sec="nfr">11. 非功能性需求</a></li>
+    </ol>
+  </nav>
+
 <div class="doc">
 
   <!-- ============ 封面 / 文档信息 ============ -->
@@ -105,24 +134,6 @@
       <tr><td>涉及角色</td><td>财务审核员、风控/客服（axingkefu 类账号）、系统管理员、系统自动任务（system）</td></tr>
       <tr><td>状态</td><td><span class="pill blue">评审中</span></td></tr>
     </table>
-  </div>
-
-  <!-- ============ 目录 ============ -->
-  <div class="toc">
-    <h2>目录</h2>
-    <ol>
-      <li><a href="#bg">1. 背景与目标</a></li>
-      <li><a href="#scope">2. 名词与范围</a></li>
-      <li><a href="#nav">3. 全局导航结构</a></li>
-      <li><a href="#m1">4. 待审核出款订单</a></li>
-      <li><a href="#m2">5. 已审核出款订单</a></li>
-      <li><a href="#m3">6. 总出款记录</a></li>
-      <li><a href="#m4">7. 提现管理（自动代付配置）</a></li>
-      <li><a href="#m5">8. 代付商户管理</a></li>
-      <li><a href="#global">9. 全局交互规范</a></li>
-      <li><a href="#dict">10. 数据字典 / 状态枚举</a></li>
-      <li><a href="#nfr">11. 非功能性需求</a></li>
-    </ol>
   </div>
 
   <!-- ============ 1. 背景与目标 ============ -->
@@ -574,5 +585,32 @@
   </ul>
 
 </div>
+</div>
+
+<script>
+  const tocLinks = Array.from(document.querySelectorAll('.sidebar-toc a'));
+  const sections = tocLinks
+    .map(a => document.getElementById(a.getAttribute('href').slice(1)))
+    .filter(Boolean);
+
+  function setActive(id){
+    tocLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+  }
+
+  if('IntersectionObserver' in window){
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries
+        .filter(e => e.isIntersecting)
+        .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+      if(visible.length) setActive(visible[0].target.id);
+    }, { rootMargin: '0px 0px -70% 0px', threshold: 0 });
+    sections.forEach(s => observer.observe(s));
+  }
+
+  tocLinks.forEach(a => {
+    a.addEventListener('click', () => setActive(a.getAttribute('href').slice(1)));
+  });
+</script>
+
 </body>
 </html>
