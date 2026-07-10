@@ -234,6 +234,18 @@
   #actTooltip .tip-icon.confiscate{background:#c0392b;}
   #actTooltip .tip-icon.pay{background:#2f6ef2;}
   #actTooltip .tip-icon.refresh{background:#8a94a6;}
+
+  /* Rich note text tooltip (操作备注 hover preview) */
+  #textTooltip{
+    position:fixed; z-index:200; display:none; max-width:440px;
+    background:#26292f; color:#fff; padding:10px 14px; border-radius:8px; font-size:12.5px; line-height:1.6;
+    box-shadow:0 10px 28px rgba(0,0,0,.28); pointer-events:none;
+  }
+  #textTooltip.show{display:block;}
+  .note-trunc{
+    display:inline-block; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    color:var(--text-dim); vertical-align:bottom; cursor:default;
+  }
   .footer-bar{
     display:flex; align-items:center; justify-content:space-between; padding:12px 4px; color:var(--text-dim); font-size:12.5px;
   }
@@ -871,16 +883,86 @@
               <div class="cfg-row">
                 <div>
                   <div class="cfg-label">免审风控开关</div>
-                  <div class="cfg-hint">开启后，可指定会员层级作为「免审不通过」的判定条件；只要会员被打上以下所选任一层级标签，其提现订单一律判定为免审不通过，必须转人工审核（第一期免审风控条件仅支持按会员层级判断）。</div>
+                  <div class="cfg-hint">开启后，可配置以下一项或多项条件作为「免审不通过」的判定依据；订单只要命中任意一项已启用的条件，即判定为免审不通过，必须转人工审核。</div>
                 </div>
                 <div class="switch on" id="sw-riskcontrol" onclick="toggleSwitch('sw-riskcontrol', onRiskControlToggle)"><div class="knob"></div></div>
               </div>
-              <div id="block-tier-select" style="margin-top:14px;">
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-                  <span style="font-size:12.5px; color:var(--text-dim);">强制人工审核的会员层级：</span>
-                  <button class="btn btn-outline" style="padding:5px 16px;" onclick="openTierSelect()">修改</button>
+
+              <div id="riskcontrol-conditions">
+
+                <div style="margin-top:16px; padding-top:16px; border-top:1px dashed var(--border);">
+                  <div class="cfg-row">
+                    <div>
+                      <div class="cfg-label" style="font-size:13px;">条件一：命中指定会员层级</div>
+                      <div class="cfg-hint">会员被打上以下所选任一层级标签时，判定为免审不通过。</div>
+                    </div>
+                    <div class="switch on" id="sw-cond-tier" onclick="toggleSwitch('sw-cond-tier', onCondTierToggle)"><div class="knob"></div></div>
+                  </div>
+                  <div id="block-tier-detail" style="margin-top:10px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                      <span style="font-size:12.5px; color:var(--text-dim);">已选层级：</span>
+                      <button class="btn btn-outline" style="padding:5px 16px;" onclick="openTierSelect()">修改</button>
+                    </div>
+                    <div id="tierChipWrap"></div>
+                  </div>
                 </div>
-                <div id="tierChipWrap"></div>
+
+                <div style="margin-top:16px; padding-top:16px; border-top:1px dashed var(--border);">
+                  <div class="cfg-row">
+                    <div>
+                      <div class="cfg-label" style="font-size:13px;">条件二：首次提现</div>
+                      <div class="cfg-hint">会员本次提现为其账户内的<b>首次提现</b>订单时，判定为免审不通过。</div>
+                    </div>
+                    <div class="switch on" id="sw-cond-firstwd" onclick="toggleSwitch('sw-cond-firstwd', onCondFirstWdToggle)"><div class="knob"></div></div>
+                  </div>
+                </div>
+
+                <div style="margin-top:16px; padding-top:16px; border-top:1px dashed var(--border);">
+                  <div class="cfg-row">
+                    <div>
+                      <div class="cfg-label" style="font-size:13px;">条件三：佣金领取次数超限</div>
+                      <div class="cfg-hint">会员在设定的时间区间内，<b>领取佣金</b>达到或超过设定次数时，判定为免审不通过（用于识别刷佣金、套利等异常行为）。</div>
+                    </div>
+                    <div class="switch on" id="sw-cond-claim-commission" onclick="toggleSwitch('sw-cond-claim-commission', onCondClaimCommissionToggle)"><div class="knob"></div></div>
+                  </div>
+                  <div id="block-claim-commission-detail" style="margin-top:10px;">
+                    <div class="amount-range">
+                      <span style="font-size:12.5px; color:var(--text-dim);">时间区间：过去</span>
+                      <input id="claim-commission-window" type="number" value="24" style="width:70px;">
+                      <select id="claim-commission-unit" style="width:70px;">
+                        <option value="hour">小时</option>
+                        <option value="day">天</option>
+                      </select>
+                      <span style="font-size:12.5px; color:var(--text-dim);">内，领取佣金次数 ≥</span>
+                      <input id="claim-commission-times" type="number" value="2" style="width:70px;">
+                      <span style="font-size:12.5px; color:var(--text-dim);">次</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="margin-top:16px; padding-top:16px; border-top:1px dashed var(--border);">
+                  <div class="cfg-row">
+                    <div>
+                      <div class="cfg-label" style="font-size:13px;">条件四：奖金领取次数超限</div>
+                      <div class="cfg-hint">会员在设定的时间区间内，<b>领取奖金</b>达到或超过设定次数时，判定为免审不通过（用于识别刷奖金、套利等异常行为）。</div>
+                    </div>
+                    <div class="switch on" id="sw-cond-claim-bonus" onclick="toggleSwitch('sw-cond-claim-bonus', onCondClaimBonusToggle)"><div class="knob"></div></div>
+                  </div>
+                  <div id="block-claim-bonus-detail" style="margin-top:10px;">
+                    <div class="amount-range">
+                      <span style="font-size:12.5px; color:var(--text-dim);">时间区间：过去</span>
+                      <input id="claim-bonus-window" type="number" value="24" style="width:70px;">
+                      <select id="claim-bonus-unit" style="width:70px;">
+                        <option value="hour">小时</option>
+                        <option value="day">天</option>
+                      </select>
+                      <span style="font-size:12.5px; color:var(--text-dim);">内，领取奖金次数 ≥</span>
+                      <input id="claim-bonus-times" type="number" value="2" style="width:70px;">
+                      <span style="font-size:12.5px; color:var(--text-dim);">次</span>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
 
@@ -904,17 +986,6 @@
                 <span>~</span>
                 <input id="amt-max" type="number" value="2000" placeholder="最大金额">
                 <span style="color:var(--text-dim); font-size:12px;">雷亚尔</span>
-              </div>
-            </div>
-
-            <!-- 2.5 首次出款强制人工审核 -->
-            <div class="cfg-block" id="block-firstout">
-              <div class="cfg-row">
-                <div>
-                  <div class="cfg-label">首次出款强制人工审核</div>
-                  <div class="cfg-hint">开启时，会员的首次出款订单一律转人工审核，<b>不受自动代付金额范围限制</b>，即使金额落在自动代付范围内也不会自动代付；关闭时，首次出款订单与其他订单一样按金额范围规则判断。</div>
-                </div>
-                <div class="switch on" id="sw-firstout" onclick="toggleSwitch('sw-firstout', onFirstOutToggle)"><div class="knob"></div></div>
               </div>
             </div>
 
@@ -1231,6 +1302,7 @@
 
 <div class="toast" id="toast"></div>
 <div id="actTooltip"><div class="tip-icon" id="actTooltipIcon"></div><div class="tip-label" id="actTooltipLabel"></div></div>
+<div id="textTooltip"></div>
 
 <script>
 /* ======================================================================
@@ -1326,8 +1398,10 @@ let data = [
     id:'3782963300', channel:'FB/278周周3-44886', level:'10000雷', operator:'axingkefu',
     order:'TX17834045429302871712', payOrder:'', account:'正式', outType:'用户提现',
     amount:800, fee:0, actual:800, created:'2026-07-07 03:09:02', bindName:'Gerson Jos',
-    bankType:'PHONE', acct:'6599340383', payMethod:'PIX', payChannel:'', firstOut:'否',
-    status:'审核中', reviewType:'自动代付条件不符', note:'自动', invite:'-', cpf:'69231010182',
+    bankType:'PHONE', acct:'6599340383', payMethod:'PIX', payChannel:'', firstOut:'是',
+    status:'审核中', reviewType:'免审不通过',
+    note:'自动代付锁定订单，锁定期间（5分钟）内不可解锁；免审条件不过，检查用户是否首次提现：true，转人工审核',
+    invite:'-', cpf:'69231010182',
     locked:false, lockedBy:null
   },
   {
@@ -1335,15 +1409,19 @@ let data = [
     order:'TX17833946700609856204', payOrder:'', account:'正式', outType:'用户提现',
     amount:800, fee:0, actual:800, created:'2026-07-07 00:25:00', bindName:'Ana Souza',
     bankType:'PHONE', acct:'5599112233', payMethod:'PIX', payChannel:'', firstOut:'否',
-    status:'待审核', reviewType:'', note:'', invite:'-', cpf:'52931010111',
+    status:'待审核', reviewType:'免审不通过',
+    note:'免审条件不过，检测到用户在过去60分钟内领取佣金3次（≥2次阈值），转人工审核',
+    invite:'-', cpf:'52931010111',
     locked:true, lockedBy:'axingkefu'
   },
   {
     id:'3454510146', channel:'FB/258-乐多1-43001', level:'500雷', operator:'',
     order:'TX17833946618646227963', payOrder:'', account:'正式', outType:'用户提现',
     amount:50, fee:0, actual:50, created:'2026-07-07 00:24:40', bindName:'João Lima',
-    bankType:'PHONE', acct:'5599004411', payMethod:'PIX', payChannel:'', firstOut:'否',
-    status:'待审核', reviewType:'', note:'', invite:'-', cpf:'11223344556',
+    bankType:'PHONE', acct:'5599004411', payMethod:'PIX', payChannel:'', firstOut:'是',
+    status:'待审核', reviewType:'免审不通过',
+    note:'免审条件不过，检查用户是否首次提现：true；系统识别到该用户在套利平台使用了邀请奖金，已从账户扣除相应奖金及获利金额',
+    invite:'-', cpf:'11223344556',
     locked:true, lockedBy:'axingkefu'
   },
   {
@@ -1351,7 +1429,9 @@ let data = [
     order:'TX17833947130337361486', payOrder:'', account:'正式', outType:'用户提现',
     amount:20, fee:0, actual:20, created:'2026-07-07 00:24:10', bindName:'Carla Dias',
     bankType:'PHONE', acct:'5599887766', payMethod:'PIX', payChannel:'', firstOut:'否',
-    status:'待审核', reviewType:'', note:'', invite:'-', cpf:'99887766554',
+    status:'待审核', reviewType:'',
+    note:'订单已生成，等待系统免审判定',
+    invite:'-', cpf:'99887766554',
     locked:true, lockedBy:'axingkefu'
   },
   {
@@ -1359,7 +1439,9 @@ let data = [
     order:'TX17833942259551290361', payOrder:'', account:'正式', outType:'用户提现',
     amount:20, fee:0, actual:20, created:'2026-07-07 00:18:04', bindName:'Paulo Sérgio',
     bankType:'PHONE', acct:'27981286987', payMethod:'PIX', payChannel:'', firstOut:'否',
-    status:'待审核', reviewType:'', note:'', invite:'-', cpf:'12345678900',
+    status:'待审核', reviewType:'',
+    note:'订单已生成，等待系统免审判定',
+    invite:'-', cpf:'12345678900',
     locked:false, lockedBy:null
   },
 ];
@@ -1401,7 +1483,7 @@ function render(){
       <td>${row.firstOut}</td>
       <td><span class="status-pill ${statusClass}">${row.status}</span></td>
       <td>${row.reviewType ? `<span class="badge">${row.reviewType}</span>` : '-'}</td>
-      <td>${row.note || '-'}</td>
+      <td>${renderNoteCell(row.note)}</td>
       <td>${row.invite}</td>
       <td>${row.cpf}</td>
       <td><div class="actions">${renderActions(row, i)}</div></td>
@@ -1449,6 +1531,33 @@ function hideActTip(){
   document.getElementById('actTooltip').classList.remove('show');
 }
 
+function showTextTip(el, text){
+  const tip = document.getElementById('textTooltip');
+  tip.textContent = text;
+  tip.style.display = 'block';
+  const rect = el.getBoundingClientRect();
+  const left = Math.min(Math.max(rect.left, 10), window.innerWidth - 450);
+  tip.style.left = left + 'px';
+  tip.style.top = (rect.top - 10) + 'px';
+  tip.style.transform = 'translateY(-100%)';
+  tip.classList.add('show');
+}
+function hideTextTip(){
+  document.getElementById('textTooltip').classList.remove('show');
+}
+function escNote(text){
+  return String(text).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, ' ');
+}
+function renderNoteCell(note){
+  if(!note) return '-';
+  if(note.length <= 14) return note;
+  const short = note.slice(0, 14) + '...';
+  return `<span class="note-trunc" onmouseenter="showTextTip(this,'${escNote(note)}')" onmouseleave="hideTextTip()">${short}</span>`;
+}
+function appendNote(row, entry){
+  row.note = row.note ? (row.note + '；' + entry) : entry;
+}
+
 function toggleAll(el){
   document.querySelectorAll('.rowchk').forEach(c => c.checked = el.checked);
   document.querySelectorAll('#rows tr').forEach(tr => tr.classList.toggle('selected', el.checked));
@@ -1486,6 +1595,7 @@ function refreshStatus(i){
   if(data[i].status === '代付中'){
     const roll = Math.random();
     data[i].status = roll < 0.7 ? '代付成功' : (roll < 0.9 ? '代付失败' : '代付异常');
+    appendNote(data[i], '渠道：' + (data[i].payChannel || '-') + ' [' + data[i].status + ']');
     render();
   }
   showToast('已拉取最新订单状态：' + data[i].status);
@@ -1504,11 +1614,15 @@ function openReject(indices){
   document.getElementById('rejectOverlay').classList.add('show');
 }
 function confirmReject(){
+  const opNote = document.getElementById('rejectOpNote').value.trim();
   const count = pendingRejectIndices.length;
   pendingRejectIndices
     .slice()
     .sort((a,b) => b - a)
-    .forEach(i => { data.splice(i, 1); });
+    .forEach(i => {
+      appendNote(data[i], '人工拒绝（操作人：axingkefu）' + (opNote ? '：' + opNote : ''));
+      data.splice(i, 1);
+    });
   render();
   closeOverlay('rejectOverlay');
   showToast('已拒绝 ' + count + ' 条订单，金额已退回会员余额');
@@ -1522,11 +1636,15 @@ function openForfeit(indices){
   document.getElementById('forfeitOverlay').classList.add('show');
 }
 function confirmForfeit(){
+  const opNote = document.getElementById('forfeitOpNote').value.trim();
   const count = pendingForfeitIndices.length;
   pendingForfeitIndices
     .slice()
     .sort((a,b) => b - a)
-    .forEach(i => { data.splice(i, 1); });
+    .forEach(i => {
+      appendNote(data[i], '人工罚没（操作人：axingkefu）' + (opNote ? '：' + opNote : ''));
+      data.splice(i, 1);
+    });
   render();
   closeOverlay('forfeitOverlay');
   showToast('已罚没 ' + count + ' 条订单，金额不返还会员，不计入报表');
@@ -1540,11 +1658,15 @@ function openManual(indices){
   document.getElementById('manualOverlay').classList.add('show');
 }
 function confirmManual(){
+  const opNote = document.getElementById('manualOpNote').value.trim();
   const count = pendingManualIndices.length;
   pendingManualIndices
     .slice()
     .sort((a,b) => b - a)
-    .forEach(i => { data.splice(i, 1); });
+    .forEach(i => {
+      appendNote(data[i], '人工完成（操作人：axingkefu）' + (opNote ? '：' + opNote : ''));
+      data.splice(i, 1);
+    });
   render();
   closeOverlay('manualOverlay');
   showToast('已将 ' + count + ' 条订单标记为人工完成');
@@ -1618,6 +1740,7 @@ function doPay(){
     data[i].payChannel = ch.name;
     data[i].payOrder = 'PO_260707' + Math.random().toString(16).slice(2,18);
     data[i].status = '代付中';
+    appendNote(data[i], '已发起代付，提现渠道：' + ch.name + '，渠道：' + ch.name);
     return `<tr>
       <td>${idx+1}</td>
       <td><span class="result-ok">✓ 成功</span></td>
@@ -1652,6 +1775,7 @@ function showDetail(i, processMode){
     <tr><td>提现金额：</td><td>${row.amount}</td></tr>
     <tr><td>手续费：</td><td>${row.fee}</td></tr>
     <tr><td>实际出款：</td><td>${row.actual}</td></tr>
+    <tr><td>操作备注：</td><td style="white-space:normal; line-height:1.6;">${row.note || '-'}</td></tr>
   `;
   const plClass = (v) => v >= 0 ? 'stat-win' : 'stat-loss';
   document.getElementById('detailStatTable').innerHTML = `
@@ -1712,7 +1836,8 @@ const reviewedData = [
     bindName:'Camila', cpf:'09265521988', bankType:'CPF', acct:'0926552...',
     payMethod:'PIX', handleMethod:'免审条件不...', payChannel:'Bestpay...', firstOut:'否',
     status:'已完成', created:'2026-07-09 02:04:09', finished:'2026-07-09 02:04:52',
-    opNote:'免审条件不...', orderNote:'-', opInfo:'axingkefu'
+    opNote:'免审条件不过，检测到用户在过去60分钟内领取佣金2次（≥2次阈值），转人工审核；人工审核通过，操作人：axingkefu；已发起代付，渠道：Bestpay代付；渠道：Bestpay代付 [代付成功]',
+    orderNote:'-', opInfo:'axingkefu'
   },
   {
     id:'3516958435', level:'500雷', channel:'FB/278周周3-44886', invite:'-',
@@ -1721,7 +1846,8 @@ const reviewedData = [
     bindName:'maria d...', cpf:'04574120380', bankType:'CPF', acct:'0457412...',
     payMethod:'PIX', handleMethod:'自动代付锁...', payChannel:'Bestpay...', firstOut:'否',
     status:'已完成', created:'2026-07-09 02:04:07', finished:'2026-07-09 02:04:13',
-    opNote:'自动代付锁...', orderNote:'-', opInfo:'system'
+    opNote:'自动代付锁定订单，锁定期间（5分钟）内不可解锁自动提现，修改为代付中；已发起代付，提现渠道：Bestpay代付，渠道：Bestpay代付 [代付成功]',
+    orderNote:'-', opInfo:'system'
   },
   {
     id:'3588849436', level:'1000雷', channel:'38159', invite:'-',
@@ -1730,7 +1856,8 @@ const reviewedData = [
     bindName:'Caique', cpf:'49936651804', bankType:'CPF', acct:'4993665...',
     payMethod:'PIX', handleMethod:'自动代付锁...', payChannel:'Bestpay...', firstOut:'否',
     status:'已完成', created:'2026-07-09 02:03:28', finished:'2026-07-09 02:03:34',
-    opNote:'自动代付锁...', orderNote:'-', opInfo:'system'
+    opNote:'自动代付锁定订单，锁定期间（5分钟）内不可解锁自动提现，修改为代付中；已发起代付，提现渠道：Bestpay代付，渠道：Bestpay代付 [代付成功]',
+    orderNote:'-', opInfo:'system'
   },
   {
     id:'3584014583', level:'10000雷', channel:'38159', invite:'-',
@@ -1739,16 +1866,18 @@ const reviewedData = [
     bindName:'Luciana...', cpf:'10497732769', bankType:'CPF', acct:'1049773...',
     payMethod:'PIX', handleMethod:'自动代付锁...', payChannel:'Bestpay...', firstOut:'否',
     status:'已完成', created:'2026-07-09 02:03:27', finished:'2026-07-09 02:03:33',
-    opNote:'自动代付锁...', orderNote:'-', opInfo:'system'
+    opNote:'自动代付锁定订单，锁定期间（5分钟）内不可解锁自动提现，修改为代付中；已发起代付，提现渠道：Bestpay代付，渠道：Bestpay代付 [代付成功]',
+    orderNote:'客服回访确认账户信息无误', opInfo:'system'
   },
   {
     id:'3795101073', level:'50雷', channel:'FB/258-乐多', invite:'3336409331',
     order:'TX17835733880355570527', payOrder:'PO_260709RSmT94MIKwIy46wsRJX',
     account:'正式', outType:'用户提现', amount:20, fee:0, actual:20,
     bindName:'Eldson', cpf:'69846391234', bankType:'CPF', acct:'6984639...',
-    payMethod:'PIX', handleMethod:'自动代付锁...', payChannel:'Bestpay...', firstOut:'否',
+    payMethod:'PIX', handleMethod:'自动代付锁...', payChannel:'Bestpay...', firstOut:'是',
     status:'已完成', created:'2026-07-09 02:03:08', finished:'2026-07-09 02:03:13',
-    opNote:'自动代付锁...', orderNote:'-', opInfo:'system'
+    opNote:'免审条件不过，检查用户是否首次提现：true，转人工审核；人工审核通过，操作人：SiteFrank01；已发起代付，渠道：Bestpay代付；渠道：Bestpay代付 [代付成功]',
+    orderNote:'-', opInfo:'system'
   }
 ];
 
@@ -1779,8 +1908,8 @@ function renderReviewed(){
       <td><span class="status-pill status-done">${row.status}</span></td>
       <td>${row.created}</td>
       <td>${row.finished}</td>
-      <td>${row.opNote}</td>
-      <td>${row.orderNote}</td>
+      <td>${renderNoteCell(row.opNote)}</td>
+      <td>${renderNoteCell(row.orderNote === '-' ? '' : row.orderNote)}</td>
       <td>${row.opInfo}</td>
       <td><button class="act detail" onclick="showRvDetail(${i})" onmouseenter="showActTip(this,'detail','≡','明细')" onmouseleave="hideActTip()">≡</button></td>
     </tr>
@@ -1809,6 +1938,8 @@ function showRvDetail(i){
     <tr><td>处理方式：</td><td>${row.handleMethod}</td></tr>
     <tr><td>创建时间：</td><td>${row.created}</td></tr>
     <tr><td>完成时间：</td><td>${row.finished}</td></tr>
+    <tr><td>操作备注：</td><td style="white-space:normal; line-height:1.6;">${row.opNote || '-'}</td></tr>
+    <tr><td>订单备注：</td><td style="white-space:normal; line-height:1.6;">${row.orderNote === '-' ? '-' : (row.orderNote || '-')}</td></tr>
   `;
   const plClass = (v) => v >= 0 ? 'stat-win' : 'stat-loss';
   document.getElementById('rvDetailStatTable').innerHTML = `
@@ -1837,7 +1968,8 @@ const totalData = [
     account:'正式', outType:'用户提现', amount:50, fee:0, actual:50,
     bindName:'Vitoria', cpf:'22668083783', bankType:'PHONE', payMethod:'PIX',
     handleMethod:'PIX代付', payChannel:'Bestpay代付', firstOut:'否', status:'已完成',
-    acct:'21989983838', created:'2026-06-30 23:59:43', finished:'2026-06-30 23:59:52', orderNote:'自动代付'
+    acct:'21989983838', created:'2026-06-30 23:59:43', finished:'2026-06-30 23:59:52',
+    orderNote:'自动代付锁定订单，锁定期间（5分钟）内不可解锁自动提现，修改为代付中；已发起代付，提现渠道：Bestpay代付，渠道：Bestpay代付 [代付成功]'
   },
   {
     id:'3438012520', account_no:'55996476463', invite:'-', operator:'axingkefu',
@@ -1845,7 +1977,8 @@ const totalData = [
     account:'正式', outType:'用户提现', amount:400, fee:0, actual:400,
     bindName:'Juliano', cpf:'02558073095', bankType:'CPF', payMethod:'PIX',
     handleMethod:'PIX代付', payChannel:'Bestpay代付', firstOut:'否', status:'已完成',
-    acct:'02558073095', created:'2026-06-30 23:58:50', finished:'2026-06-30 23:59:28', orderNote:'自动代付'
+    acct:'02558073095', created:'2026-06-30 23:58:50', finished:'2026-06-30 23:59:28',
+    orderNote:'免审条件不过，检测到用户在过去60分钟内领取佣金2次（≥2次阈值），转人工审核；人工审核通过，操作人：axingkefu；已发起代付，渠道：Bestpay代付 [代付成功]'
   },
   {
     id:'3718431411', account_no:'93991342061', invite:'-', operator:'system',
@@ -1853,7 +1986,8 @@ const totalData = [
     account:'正式', outType:'用户提现', amount:73, fee:0, actual:73,
     bindName:'sandrovale de J', cpf:'00694284254', bankType:'CPF', payMethod:'PIX',
     handleMethod:'PIX代付', payChannel:'Bestpay代付', firstOut:'否', status:'已完成',
-    acct:'00694284254', created:'2026-06-30 23:58:30', finished:'2026-06-30 23:58:36', orderNote:'自动代付'
+    acct:'00694284254', created:'2026-06-30 23:58:30', finished:'2026-06-30 23:58:36',
+    orderNote:'自动代付锁定订单，锁定期间（5分钟）内不可解锁自动提现，修改为代付中；已发起代付，提现渠道：Bestpay代付，渠道：Bestpay代付 [代付成功]'
   },
   {
     id:'3883306961', account_no:'66992821045', invite:'-', operator:'system',
@@ -1861,7 +1995,8 @@ const totalData = [
     account:'正式', outType:'用户提现', amount:26, fee:0, actual:26,
     bindName:'matheus', cpf:'06241162128', bankType:'CPF', payMethod:'PIX',
     handleMethod:'PIX代付', payChannel:'Bestpay代付', firstOut:'否', status:'已完成',
-    acct:'06241162128', created:'2026-06-30 23:55:30', finished:'2026-06-30 23:55:36', orderNote:'自动代付'
+    acct:'06241162128', created:'2026-06-30 23:55:30', finished:'2026-06-30 23:55:36',
+    orderNote:'自动代付锁定订单，锁定期间（5分钟）内不可解锁自动提现，修改为代付中；已发起代付，提现渠道：Bestpay代付，渠道：Bestpay代付 [代付成功]'
   },
   {
     id:'3348484652', account_no:'11971246997', invite:'3605442618', operator:'axingkefu',
@@ -1869,7 +2004,8 @@ const totalData = [
     account:'正式', outType:'用户提现', amount:200, fee:0, actual:200,
     bindName:'carlos Alberto', cpf:'49798346807', bankType:'CPF', payMethod:'PIX',
     handleMethod:'PIX代付', payChannel:'Bestpay代付', firstOut:'是', status:'已完成',
-    acct:'49798346807', created:'2026-06-30 23:55:21', finished:'2026-06-30 23:56:25', orderNote:'免审条件'
+    acct:'49798346807', created:'2026-06-30 23:55:21', finished:'2026-06-30 23:56:25',
+    orderNote:'免审条件不过，检查用户是否首次提现：true，转人工审核；人工审核通过，操作人：axingkefu；已发起代付，渠道：Bestpay代付 [代付成功]'
   },
   {
     id:'3982120268', account_no:'22996069857', invite:'-', operator:'system',
@@ -1877,7 +2013,8 @@ const totalData = [
     account:'正式', outType:'用户提现', amount:40, fee:0, actual:40,
     bindName:'ELINELE', cpf:'08907373710', bankType:'CPF', payMethod:'PIX',
     handleMethod:'PIX代付', payChannel:'Bestpay代付', firstOut:'否', status:'已完成',
-    acct:'08907373710', created:'2026-06-30 23:54:35', finished:'2026-06-30 23:54:41', orderNote:'自动代付'
+    acct:'08907373710', created:'2026-06-30 23:54:35', finished:'2026-06-30 23:54:41',
+    orderNote:'自动代付锁定订单，锁定期间（5分钟）内不可解锁自动提现，修改为代付中；已发起代付，提现渠道：Bestpay代付，渠道：Bestpay代付 [代付成功]'
   },
   {
     id:'3503879751', account_no:'19989867245', invite:'3283961173', operator:'system',
@@ -1885,7 +2022,8 @@ const totalData = [
     account:'正式', outType:'用户提现', amount:50, fee:0, actual:50,
     bindName:'Andreza', cpf:'26245772893', bankType:'CPF', payMethod:'PIX',
     handleMethod:'PIX代付', payChannel:'Bestpay代付', firstOut:'否', status:'已完成',
-    acct:'26245772893', created:'2026-06-30 23:53:42', finished:'2026-06-30 23:53:48', orderNote:'自动代付'
+    acct:'26245772893', created:'2026-06-30 23:53:42', finished:'2026-06-30 23:53:48',
+    orderNote:'自动代付锁定订单，锁定期间（5分钟）内不可解锁自动提现，修改为代付中；已发起代付，提现渠道：Bestpay代付，渠道：Bestpay代付 [代付成功]'
   },
   {
     id:'3703838332', account_no:'82993565030', invite:'3106573329', operator:'axingkefu',
@@ -1893,7 +2031,8 @@ const totalData = [
     account:'正式', outType:'用户提现', amount:20, fee:0, actual:20,
     bindName:'Carlos Eduardo', cpf:'14113715424', bankType:'CPF', payMethod:'PIX',
     handleMethod:'PIX代付', payChannel:'Bestpay代付', firstOut:'是', status:'已完成',
-    acct:'14113715424', created:'2026-06-30 23:51:43', finished:'2026-06-30 23:52:24', orderNote:'免审条件'
+    acct:'14113715424', created:'2026-06-30 23:51:43', finished:'2026-06-30 23:52:24',
+    orderNote:'免审条件不过，检查用户是否首次提现：true，转人工审核；人工审核通过，操作人：SiteFrank01；已发起代付，渠道：Bestpay代付 [代付成功]'
   }
 ];
 
@@ -1923,7 +2062,7 @@ function renderTotal(){
       <td>${row.acct}</td>
       <td>${row.created}</td>
       <td>${row.finished}</td>
-      <td>${row.orderNote}</td>
+      <td>${renderNoteCell(row.orderNote)}</td>
       <td><button class="act detail" onclick="showTotalDetail(${i})" onmouseenter="showActTip(this,'detail','≡','明细')" onmouseleave="hideActTip()">≡</button></td>
     </tr>
   `).join('');
@@ -1952,7 +2091,7 @@ function showTotalDetail(i){
     <tr><td>处理方式：</td><td>${row.handleMethod}</td></tr>
     <tr><td>创建时间：</td><td>${row.created}</td></tr>
     <tr><td>完成时间：</td><td>${row.finished}</td></tr>
-    <tr><td>订单备注：</td><td>${row.orderNote}</td></tr>
+    <tr><td>订单备注：</td><td style="white-space:normal; line-height:1.6;">${row.orderNote || '-'}</td></tr>
   `;
   const plClass = (v) => v >= 0 ? 'stat-win' : 'stat-loss';
   document.getElementById('totalDetailStatTable').innerHTML = `
@@ -2024,7 +2163,7 @@ function toggleSwitch(id, cb){
 function onAutoPayToggle(isOn){
   document.getElementById('amt-min').disabled = !isOn;
   document.getElementById('amt-max').disabled = !isOn;
-  ['block-amount', 'block-firstout', 'block-autoreject', 'block-channels'].forEach(id => {
+  ['block-amount', 'block-autoreject', 'block-channels'].forEach(id => {
     document.getElementById(id).style.display = isOn ? 'block' : 'none';
   });
   showToast(isOn ? '自动代付已开启' : '自动代付已关闭，订单将转为人工处理');
@@ -2078,12 +2217,23 @@ function confirmTierSelect(){
 }
 
 function onRiskControlToggle(isOn){
-  document.getElementById('block-tier-select').style.display = isOn ? 'block' : 'none';
-  showToast(isOn ? '免审风控已开启' : '免审风控已关闭，会员层级不再作为免审判定条件');
+  document.getElementById('riskcontrol-conditions').style.display = isOn ? 'block' : 'none';
+  showToast(isOn ? '免审风控已开启' : '免审风控已关闭，以下所有条件均不再生效');
 }
-
-function onFirstOutToggle(isOn){
-  showToast(isOn ? '已开启：首次出款订单将强制转人工审核' : '已关闭：首次出款订单按金额范围规则自动处理');
+function onCondTierToggle(isOn){
+  document.getElementById('block-tier-detail').style.display = isOn ? 'block' : 'none';
+  showToast(isOn ? '「命中会员层级」条件已开启' : '「命中会员层级」条件已关闭');
+}
+function onCondFirstWdToggle(isOn){
+  showToast(isOn ? '「首次提现」条件已开启' : '「首次提现」条件已关闭');
+}
+function onCondClaimCommissionToggle(isOn){
+  document.getElementById('block-claim-commission-detail').style.display = isOn ? 'block' : 'none';
+  showToast(isOn ? '「佣金领取次数超限」条件已开启' : '「佣金领取次数超限」条件已关闭');
+}
+function onCondClaimBonusToggle(isOn){
+  document.getElementById('block-claim-bonus-detail').style.display = isOn ? 'block' : 'none';
+  showToast(isOn ? '「奖金领取次数超限」条件已开启' : '「奖金领取次数超限」条件已关闭');
 }
 
 function saveConfig(){
