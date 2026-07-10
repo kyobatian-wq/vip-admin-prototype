@@ -1,0 +1,2195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>商户财务管理 - 出款订单</title>
+<style>
+  :root{
+    --bg: #f0f2f5;
+    --panel: #ffffff;
+    --border: #e5e7eb;
+    --text: #1f2329;
+    --text-dim: #6b7280;
+    --primary: #2f6ef2;
+    --primary-dark: #1f57d6;
+    --danger: #e0542a;
+    --warn: #d9832f;
+    --ok: #2e9e5b;
+    --row-select: #eaf1ff;
+    --radius: 4px;
+    --mono: 'SFMono-Regular', Consolas, 'Courier New', monospace;
+    --sidebar-bg: #1f2733;
+    --sidebar-text: #b7c0cc;
+    --sidebar-active: #2f6ef2;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-size:13px;
+  }
+
+  /* ===== App shell / sidebar ===== */
+  .app{display:flex; min-height:100vh;}
+  .sidebar{
+    width:230px; background:var(--sidebar-bg); flex:0 0 auto; color:var(--sidebar-text);
+    display:flex; flex-direction:column;
+  }
+  .sidebar-logo{
+    display:flex; align-items:center; gap:8px; padding:16px 16px; border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .sidebar-logo .badge-ic{
+    width:26px; height:26px; border-radius:6px; background:linear-gradient(135deg,#ff9a3c,#ff6a3c);
+    display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#fff;
+  }
+  .sidebar-logo b{color:#fff; font-size:14px; letter-spacing:.5px;}
+  .sidebar-group-title{
+    display:flex; align-items:center; justify-content:space-between; gap:8px; padding:14px 16px 8px;
+    color:#8fd3ff; font-size:13px; cursor:pointer;
+  }
+  .sidebar-group-title span.ic{opacity:.7;}
+  .sidebar-menu{display:flex; flex-direction:column; padding-bottom:20px;}
+  .sidebar-item{
+    padding:11px 16px 11px 40px; font-size:12.8px; cursor:pointer; color:var(--sidebar-text);
+    border-left:3px solid transparent;
+  }
+  .sidebar-item:hover{background:rgba(255,255,255,.04); color:#fff;}
+  .sidebar-item.active{
+    background:var(--sidebar-active); color:#fff; border-left-color:#8fc1ff; font-weight:600;
+  }
+  .sidebar-item.built{
+    color:#ffd479; font-weight:600; position:relative;
+    display:flex; align-items:center; justify-content:space-between; padding-right:16px;
+  }
+  .sidebar-item.built.active{color:#fff;}
+  .sidebar-item.built .built-dot{
+    width:6px; height:6px; border-radius:50%; background:#ffd479; flex:0 0 auto;
+  }
+  .sidebar-item.built.active .built-dot{background:#fff;}
+  .main{flex:1; min-width:0; display:flex; flex-direction:column;}
+
+  /* ===== Topbar / tabs (shared) ===== */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    background:#fff; border-bottom:1px solid var(--border);
+    padding:10px 18px; font-size:13px; color:var(--text-dim);
+  }
+  .crumb b{color:var(--text); font-weight:600;}
+  .topbar-right{display:flex; align-items:center; gap:14px;}
+  .flag{background:#0f9d58; color:#fff; border-radius:3px; padding:2px 6px; font-size:11px;}
+  .tabs{
+    display:flex; gap:2px; background:#fff; border-bottom:1px solid var(--border);
+    padding:0 14px; overflow-x:auto; white-space:nowrap;
+  }
+  .tab{
+    padding:9px 12px; font-size:12.5px; color:var(--text-dim); cursor:pointer; border-bottom:2px solid transparent;
+    display:flex; align-items:center; gap:8px;
+  }
+  .tab .tab-x{opacity:.55; font-size:11px;}
+  .tab.active{color:var(--primary); border-bottom-color:var(--primary); font-weight:600; background:#f5f8ff;}
+  .container{padding:14px 16px;}
+
+  /* ===== Filters ===== */
+  .filters{
+    background:#fff; border:1px solid var(--border); border-radius:var(--radius);
+    padding:14px 16px 4px; display:grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap:10px 14px; margin-bottom:12px;
+  }
+  .f-item{display:flex; flex-direction:row; align-items:center; gap:8px;}
+  .f-item label{
+    font-size:12.5px; color:var(--text-dim); white-space:nowrap; flex:0 0 auto;
+    width:74px; text-align:right;
+  }
+  .f-item select, .f-item input{
+    border:1px solid var(--border); border-radius:3px; padding:6px 8px; font-size:12.5px; color:var(--text);
+    background:#fff; flex:1; min-width:0; width:100%;
+  }
+  .f-item.wide{grid-column:span 2;}
+  .f-item.wide label{width:74px;}
+  .f-item.check-item{gap:6px;}
+  .f-item.check-item label{width:auto; text-align:left;}
+  .range{display:flex; align-items:center; gap:6px; flex:1;}
+  .range input{flex:1; min-width:0;}
+  .combo-item{gap:0;}
+  .combo-select{
+    flex:0 0 auto; width:88px; border-radius:3px 0 0 3px; border-right:none;
+    color:var(--text-dim); background:#fafbfc;
+  }
+  .combo-input{border-radius:0 3px 3px 0;}
+  .f-actions{
+    grid-column: span 6; display:flex; justify-content:flex-end; align-items:center; gap:16px; padding:6px 0 10px;
+    border-top:1px dashed var(--border); margin-top:4px;
+  }
+  .quick-row{
+    display:flex; align-items:center; gap:8px; grid-column: span 6;
+    padding-top:8px; border-top:1px dashed var(--border); margin-top:2px;
+  }
+  .quick-btn{
+    border:1px solid var(--border); background:#fff; border-radius:3px; padding:7px 14px; font-size:12.5px; cursor:pointer; color:var(--text);
+  }
+  .quick-btn:hover{background:#f2f4f7;}
+  .quick-row .spacer{flex:1;}
+  .check-line{display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--text-dim); margin-right:auto;}
+  .btn{
+    border:none; border-radius:3px; padding:7px 16px; font-size:12.5px; cursor:pointer;
+    background:#eef1f5; color:var(--text);
+  }
+  .btn:hover{filter:brightness(0.96);}
+  .btn-primary{background:var(--primary); color:#fff;}
+  .btn-primary:hover{background:var(--primary-dark);}
+  .btn-outline{background:#fff; border:1px solid var(--border);}
+  .toolbar{
+    display:flex; align-items:center; gap:8px; background:#fff; border:1px solid var(--border); border-bottom:none;
+    padding:10px 14px; border-radius:var(--radius) var(--radius) 0 0;
+  }
+  .toolbar .spacer{flex:1;}
+  .icon-btn{
+    width:28px; height:28px; border-radius:3px; border:1px solid var(--border); background:#fff;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-dim);
+  }
+  .icon-btn:hover{background:#f2f4f7; color:var(--primary);}
+
+  /* ===== Summary (reviewed page) ===== */
+  .summary-wrap{
+    background:#fff; border:1px solid var(--border); border-radius:var(--radius); margin-bottom:12px; overflow:hidden;
+  }
+  .summary-head{
+    display:flex; align-items:center; justify-content:flex-end; padding:10px 14px; border-bottom:1px solid var(--border);
+  }
+  table.summary{width:100%; border-collapse:collapse;}
+  table.summary th, table.summary td{
+    border:1px solid var(--border); padding:10px 14px; text-align:center; font-size:12.5px; white-space:nowrap;
+  }
+  table.summary th{background:#fafbfc; color:var(--text-dim); font-weight:600;}
+  table.summary td{font-weight:600; color:var(--text);}
+
+  /* ===== Data tables ===== */
+  .table-wrap{
+    background:#fff; border:1px solid var(--border); border-radius:0 0 var(--radius) var(--radius);
+    overflow-x:auto;
+  }
+  .table-wrap.standalone{border-radius:var(--radius);}
+  .table-wrap table{border-collapse:collapse; width:100%; min-width:1500px;}
+  .table-wrap thead th{
+    background:#fafbfc; color:var(--text-dim); font-weight:600; text-align:left;
+    padding:9px 10px; border-bottom:1px solid var(--border); white-space:nowrap; font-size:12px;
+  }
+  .table-wrap tbody td{
+    padding:10px 10px; border-bottom:1px solid var(--border); white-space:nowrap; font-size:12.5px; vertical-align:middle;
+  }
+  .table-wrap tbody tr.selected{background:var(--row-select);}
+  .table-wrap tbody tr:hover{background:#f7f9fc;}
+  table.main-table{min-width:2400px;}
+  .id-link{color:var(--primary); cursor:pointer;}
+  .status-pill{
+    padding:2px 8px; border-radius:10px; font-size:11.5px; font-weight:600;
+  }
+  .status-normal{color:var(--ok); background:#e6f6ec;}
+  .status-done{color:var(--ok); background:#e6f6ec;}
+  .status-review{color:var(--primary); background:#eaf1ff;}
+  .status-lock{color:var(--warn); background:#fdf1e3;}
+  .status-pending{color:#6b7280; background:#eef0f3;}
+  .status-paying{color:var(--warn); background:#fdf1e3;}
+  .status-paysuccess{color:var(--ok); background:#e6f6ec;}
+  .status-payfail{color:var(--danger); background:#fdece7;}
+  .status-payerror{color:#c0392b; background:#fbe4e0;}
+  .badge{
+    display:inline-block; font-size:11.5px; padding:2px 6px; border-radius:3px;
+    background:#fdece7; color:var(--danger); font-weight:600;
+  }
+  .actions{display:flex; gap:6px;}
+  .act{
+    width:26px; height:26px; border-radius:3px; border:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; font-size:14px;
+    color:#fff; background:#8a94a6;
+  }
+  .act.detail{background:#8a94a6;}
+  .act.lock{background:#5b7fe6;}
+  .act.unlock{background:#5b7fe6;}
+  .act.process{background:#f0a63f;}
+  .act.reject{background:#e0542a;}
+  .act.confiscate{background:#c0392b;}
+  .act.pay{background:#2f6ef2;}
+  .act.refresh{background:#8a94a6;}
+  .act[disabled]{opacity:.35; cursor:not-allowed;}
+
+  /* Hover tooltip preview (mirrors legend style) */
+  #actTooltip{
+    position:fixed; z-index:200; display:none; flex-direction:column; align-items:center; gap:6px;
+    background:#fff; border-radius:8px; padding:10px 14px; box-shadow:0 8px 24px rgba(0,0,0,.18);
+    pointer-events:none; transform:translate(-50%, -100%);
+  }
+  #actTooltip.show{display:flex;}
+  #actTooltip .tip-icon{
+    width:40px; height:40px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+    font-size:18px; color:#fff;
+  }
+  #actTooltip .tip-label{font-size:12px; color:var(--text-dim); white-space:nowrap;}
+  #actTooltip .tip-icon.detail{background:#8a94a6;}
+  #actTooltip .tip-icon.lock{background:#5b7fe6;}
+  #actTooltip .tip-icon.unlock{background:#5b7fe6;}
+  #actTooltip .tip-icon.process{background:#f0a63f;}
+  #actTooltip .tip-icon.reject{background:#e0542a;}
+  #actTooltip .tip-icon.confiscate{background:#c0392b;}
+  #actTooltip .tip-icon.pay{background:#2f6ef2;}
+  #actTooltip .tip-icon.refresh{background:#8a94a6;}
+  .footer-bar{
+    display:flex; align-items:center; justify-content:space-between; padding:12px 4px; color:var(--text-dim); font-size:12.5px;
+  }
+  .pager{display:flex; align-items:center; gap:6px;}
+  .pager button{
+    border:1px solid var(--border); background:#fff; border-radius:3px; width:28px; height:28px; cursor:pointer; font-size:12.5px;
+  }
+  .pager button.active{background:var(--primary); color:#fff; border-color:var(--primary);}
+  .pager .dots{color:var(--text-dim); padding:0 4px;}
+  .pager .jump{display:flex; align-items:center; gap:6px; margin-left:8px;}
+  .pager .jump input{width:44px; border:1px solid var(--border); border-radius:3px; padding:5px 6px; font-size:12.5px;}
+  .legend-note{
+    margin-top:16px; background:#fff; border:1px dashed var(--border); border-radius:var(--radius); padding:12px 16px;
+    font-size:12px; color:var(--text-dim);
+  }
+  .legend-note b{color:var(--text);}
+
+  /* ===== Modals (shared) ===== */
+  .overlay{
+    position:fixed; inset:0; background:rgba(20,24,32,.45); display:none; align-items:center; justify-content:center; z-index:50;
+  }
+  .overlay.show{display:flex;}
+  .modal{
+    background:#fff; border-radius:6px; width:420px; max-width:92vw; padding:22px 24px; box-shadow:0 12px 40px rgba(0,0,0,.2);
+  }
+  .modal.wide{width:760px;}
+  .modal-head{display:flex; align-items:center; gap:8px; font-size:14px; font-weight:600; margin-bottom:14px;}
+  .modal-head .warn-ic{color:var(--warn); font-size:18px;}
+  .modal-body{font-size:13px; color:var(--text); margin-bottom:20px;}
+  .modal-actions{display:flex; justify-content:flex-end; gap:10px;}
+  .mini-table{width:100%; border-collapse:collapse; margin-bottom:16px; font-size:12.5px;}
+  .mini-table th, .mini-table td{border:1px solid var(--border); padding:8px 10px; text-align:left;}
+  .mini-table th{background:#fafbfc; color:var(--text-dim); font-weight:600;}
+  .channel-list{display:flex; flex-wrap:wrap; gap:14px; margin-bottom:18px; font-size:12.5px;}
+  .channel-opt{display:flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid var(--border); border-radius:4px; cursor:pointer;}
+  .channel-opt.selected{border-color:var(--primary); background:#eaf1ff;}
+  .channel-opt.disabled{opacity:.45; cursor:not-allowed;}
+  .refresh-link{color:var(--primary); font-size:11.5px; margin-left:2px; cursor:pointer;}
+  .result-row{display:flex; align-items:center; gap:20px; padding:12px; border:1px solid var(--border); border-radius:4px; margin-bottom:18px;}
+  .result-ok{color:var(--ok); font-weight:600;}
+  .pay-warning{color:var(--danger); font-size:12.5px; text-align:center; margin:-6px 0 14px;}
+  .btn-primary:disabled{background:#c7d3ee; color:#fff; cursor:not-allowed;}
+  .btn-primary:disabled:hover{background:#c7d3ee;}
+  .close-x{margin-left:auto; cursor:pointer; color:var(--text-dim); font-size:16px; border:none; background:none;}
+  .modal-titlebar{display:flex; align-items:center; margin-bottom:14px;}
+  .modal-titlebar h3{margin:0; font-size:14px;}
+  .detail-modal{width:960px; max-width:95vw;}
+  .detail-body{display:flex; gap:24px; align-items:flex-start;}
+  .detail-left{flex:0 0 420px;}
+  .detail-right{flex:1;}
+  .kv-table{width:100%; border-collapse:collapse; font-size:12.5px;}
+  .kv-table tr td{border:1px solid var(--border); padding:9px 12px;}
+  .kv-table tr td:first-child{
+    width:110px; background:#fafbfc; color:var(--text-dim); white-space:nowrap;
+  }
+  .kv-table tr td:last-child{color:var(--text);}
+  .kv-table .id-link{color:var(--primary); font-weight:600;}
+  .copy-ic{color:var(--primary); cursor:pointer; margin-left:6px; font-size:12px;}
+  .stat-table{width:100%; border-collapse:collapse; font-size:12.5px;}
+  .stat-table th, .stat-table td{border:1px solid var(--border); padding:9px 12px; text-align:left; white-space:nowrap;}
+  .stat-table th{background:#fafbfc; color:var(--text-dim); font-weight:600;}
+  .stat-win{color:var(--ok); font-weight:600;}
+  .stat-loss{color:var(--danger); font-weight:600;}
+  .remark-block{margin-bottom:14px;}
+  .remark-block label{display:block; font-size:12.5px; color:var(--text); margin-bottom:6px;}
+  .remark-block textarea{
+    width:100%; min-height:64px; border:1px solid var(--border); border-radius:4px;
+    padding:8px 10px; font-size:12.5px; font-family:inherit; resize:vertical; color:var(--text);
+  }
+  .remark-hint{color:var(--danger); font-size:12px; margin-top:6px; line-height:1.5;}
+  .detail-process-actions{
+    display:flex; justify-content:center; gap:14px; margin-top:20px; padding-top:18px; border-top:1px solid var(--border);
+  }
+  .detail-process-actions:empty{margin-top:0; padding-top:0; border-top:none;}
+  .proc-btn{
+    border:none; border-radius:4px; padding:9px 26px; font-size:12.5px; color:#fff; cursor:pointer; font-weight:600;
+  }
+  .proc-btn.pb-reject{background:#2f6ef2;}
+  .proc-btn.pb-forfeit{background:#e0392b;}
+  .proc-btn.pb-manual{background:#2e9e5b;}
+  .proc-btn.pb-pay{background:#2e9e5b;}
+  .toast{
+    position:fixed; top:20px; left:50%; transform:translateX(-50%);
+    background:#1f2329; color:#fff; padding:10px 20px; border-radius:4px; font-size:13px; z-index:80; opacity:0; transition:opacity .25s;
+    pointer-events:none;
+  }
+  .toast.show{opacity:1;}
+
+  /* ===== 提现管理 / 自动代付配置 ===== */
+  .subtabs{display:flex; gap:8px; background:#fff; padding:12px 16px 0; border-bottom:1px solid var(--border);}
+  .subtab{
+    padding:8px 14px; font-size:12.8px; color:var(--text-dim); cursor:pointer; border-radius:4px 4px 0 0;
+    border:1px solid transparent;
+  }
+  .subtab.active{color:var(--primary); font-weight:600; border-color:var(--border); border-bottom-color:#fff; background:#fff; margin-bottom:-1px;}
+  .panel{background:#fff; border:1px solid var(--border); border-radius:var(--radius); padding:22px 24px;}
+  .panel-cols{display:grid; grid-template-columns: 340px 1fr; gap:36px;}
+  .col-title{font-size:13.5px; font-weight:600; color:var(--text); margin-bottom:16px;}
+  .radio-line{display:flex; align-items:center; gap:8px; margin-bottom:14px; font-size:13px;}
+  .cfg-block{
+    border:1px solid var(--border); border-radius:6px; padding:16px 18px; margin-bottom:16px; background:#fafbfc;
+  }
+  .cfg-row{display:flex; align-items:flex-start; justify-content:space-between; gap:16px;}
+  .cfg-label{font-size:13.5px; font-weight:600; color:var(--text); margin-bottom:4px;}
+  .cfg-hint{font-size:12px; color:var(--text-dim); line-height:1.6; max-width:560px;}
+  .cfg-hint.danger{color:var(--danger);}
+  .switch{
+    position:relative; width:42px; height:22px; flex:0 0 auto; border-radius:12px; background:#ccd2db; cursor:pointer;
+    transition:background .15s;
+  }
+  .switch.on{background:var(--primary);}
+  .switch .knob{
+    position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:#fff; transition:left .15s;
+    box-shadow:0 1px 3px rgba(0,0,0,.25);
+  }
+  .switch.on .knob{left:22px;}
+  .amount-range{display:flex; align-items:center; gap:8px; margin-top:10px;}
+  .amount-range input{
+    width:120px; border:1px solid var(--border); border-radius:3px; padding:6px 10px; font-size:12.5px;
+  }
+  .amount-range input:disabled{background:#f0f2f5; color:#aab1bc;}
+  table.channel-cfg{width:100%; border-collapse:collapse; margin-top:6px; font-size:12.5px;}
+  table.channel-cfg th, table.channel-cfg td{
+    border:1px solid var(--border); padding:9px 10px; text-align:left; vertical-align:middle;
+  }
+  table.channel-cfg th{background:#f5f6f8; color:var(--text-dim); font-weight:600;}
+  table.channel-cfg select{
+    border:1px solid var(--border); border-radius:3px; padding:5px 8px; font-size:12.5px; min-width:170px;
+  }
+  table.channel-cfg .threshold-input{
+    width:70px; border:1px solid var(--border); border-radius:3px; padding:5px 8px; font-size:12.5px; margin-left:6px;
+  }
+  .threshold-cell{display:flex; align-items:center; gap:2px; flex-wrap:wrap;}
+  .recommended-tag{
+    font-size:11px; color:var(--ok); background:#e6f6ec; padding:1px 6px; border-radius:8px; margin-left:6px;
+  }
+  .actions-row{display:flex; gap:10px; margin-top:20px;}
+
+  .tier-chip{
+    display:inline-block; border:1px solid var(--border); border-radius:16px; padding:5px 14px; font-size:12.5px;
+    cursor:pointer; background:#fff; color:var(--text-dim); margin:0 8px 8px 0; user-select:none;
+  }
+  .tier-chip:hover{border-color:#c3cfe8;}
+  .tier-chip.selected{border-color:var(--primary); background:#eaf1ff; color:var(--primary); font-weight:600;}
+  .tier-tag{
+    display:inline-block; border:1px solid #bcd2fb; border-radius:16px; padding:4px 14px; font-size:12.5px;
+    background:#eaf1ff; color:var(--primary); font-weight:600; margin:0 8px 8px 0;
+  }
+  .tier-tag.empty{color:var(--text-dim); background:#f0f2f5; border-color:var(--border); font-weight:400;}
+  .tier-checklist{display:flex; flex-direction:column; gap:2px; max-height:320px; overflow-y:auto;}
+  .tier-check-item{
+    display:flex; align-items:center; gap:10px; padding:9px 8px; border-radius:4px; cursor:pointer; font-size:13px;
+  }
+  .tier-check-item:hover{background:#f5f7fa;}
+  .tier-check-item input{width:15px; height:15px;}
+
+  /* ===== 代付商户管理 ===== */
+  .hint-red{color:var(--danger); font-size:12.5px; margin:10px 0;}
+  .merchant-filter-row{
+    display:flex; align-items:center; gap:12px; background:#fff; border:1px solid var(--border); border-radius:var(--radius);
+    padding:14px 16px; margin-bottom:8px; flex-wrap:wrap;
+  }
+  .merchant-filter-row input{
+    border:1px solid var(--border); border-radius:3px; padding:7px 10px; font-size:12.5px;
+  }
+  .merchant-toolbar{display:flex; align-items:center; justify-content:flex-end; gap:8px; margin-bottom:8px;}
+  table.merchant-table{min-width:1500px;}
+  .status-tag{
+    display:inline-block; padding:2px 12px; border-radius:10px; font-size:11.5px; font-weight:600;
+  }
+  .status-tag.on{color:var(--ok); background:#e6f6ec;}
+  .status-tag.off{color:var(--danger); background:#fdece7;}
+  .chip-btn{
+    border:1px solid; border-radius:3px; padding:5px 12px; font-size:12px; cursor:pointer; background:#fff; margin-right:4px;
+  }
+  .chip-btn.gray{color:var(--text-dim); border-color:var(--border);}
+  .chip-btn.blue{color:var(--primary); border-color:#bcd2fb;}
+  .chip-btn.red{color:var(--danger); border-color:#f6cdbf;}
+  .chip-btn.green{color:var(--ok); border-color:#bfe6cf;}
+  .chip-btn:hover{filter:brightness(.97);}
+  .form-grid{display:flex; flex-direction:column; gap:16px;}
+  .form-row{display:flex; align-items:flex-start; gap:14px;}
+  .form-row label{
+    flex:0 0 100px; text-align:right; font-size:12.8px; color:var(--text); padding-top:8px;
+  }
+  .form-row label .req{color:var(--danger); margin-right:2px;}
+  .form-row .form-control{flex:1;}
+  .form-row select, .form-row input{
+    width:100%; border:1px solid var(--border); border-radius:3px; padding:8px 10px; font-size:12.5px;
+  }
+  .form-row textarea{
+    width:100%; min-height:110px; border:1px solid var(--border); border-radius:3px; padding:8px 10px;
+    font-size:12.5px; font-family:inherit; resize:vertical;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ 左侧菜单 ============ -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="badge-ic">FF</div>
+      <b>DD.GG</b>
+    </div>
+    <div class="sidebar-group-title">
+      <span>💰 商户财务管理</span>
+      <span class="ic">⌃</span>
+    </div>
+    <div class="sidebar-menu">
+      <div class="sidebar-item" onclick="sidebarStub('会员人工加减额')">会员人工加减额</div>
+      <div class="sidebar-item" onclick="sidebarStub('会员人工加额审核')">会员人工加额审核</div>
+      <div class="sidebar-item" onclick="sidebarStub('会员人工加额记录')">会员人工加额记录</div>
+      <div class="sidebar-item" onclick="sidebarStub('会员人工减额记录')">会员人工减额记录</div>
+      <div class="sidebar-item" onclick="sidebarStub('优惠调整审核')">优惠调整审核</div>
+      <div class="sidebar-item" onclick="sidebarStub('优惠调整记录')">优惠调整记录</div>
+      <div class="sidebar-item" onclick="sidebarStub('充值订单记录')">充值订单记录</div>
+      <div class="sidebar-item" onclick="sidebarStub('未上分三方充值订单')">未上分三方充值订单</div>
+      <div class="sidebar-item" onclick="sidebarStub('支付方式排序')">支付方式排序</div>
+      <div class="sidebar-item" onclick="sidebarStub('充值审核记录')">充值审核记录</div>
+      <div class="sidebar-item built" id="side-pending" onclick="switchTab('pending')">待审核出款订单<span class="built-dot"></span></div>
+      <div class="sidebar-item built active" id="side-reviewed" onclick="switchTab('reviewed')">已审核出款订单<span class="built-dot"></span></div>
+      <div class="sidebar-item" onclick="sidebarStub('人工加额审核记录')">人工加额审核记录</div>
+      <div class="sidebar-item" onclick="sidebarStub('返水审核记录')">返水审核记录</div>
+      <div class="sidebar-item" onclick="sidebarStub('会员提现审核')">会员提现审核</div>
+      <div class="sidebar-item built" id="side-total" onclick="switchTab('total')">总出款记录<span class="built-dot"></span></div>
+    </div>
+    <div class="sidebar-group-title">
+      <span>🗂 商户财务配置</span>
+      <span class="ic">⌃</span>
+    </div>
+    <div class="sidebar-menu">
+      <div class="sidebar-item" onclick="sidebarStub('支付管理')">支付管理</div>
+      <div class="sidebar-item" onclick="sidebarStub('支付方式管理')">支付方式管理</div>
+      <div class="sidebar-item" onclick="sidebarStub('充值返现设置')">充值返现设置</div>
+      <div class="sidebar-item built" id="side-merchant" onclick="switchTab('merchant')">代付商户管理<span class="built-dot"></span></div>
+      <div class="sidebar-item built" id="side-autopay" onclick="switchTab('autopay')">提现管理<span class="built-dot"></span></div>
+    </div>
+  </div>
+
+  <!-- ============ 主体 ============ -->
+  <div class="main">
+
+    <div class="topbar">
+      <div class="crumb"><span id="crumbModule">商户财务管理</span> / <b id="crumbText">已审核出款订单</b></div>
+      <div class="topbar-right">
+        <span>📶 227ms</span>
+        <span class="flag">🇧🇷 巴西</span>
+        <span>Etc/GMT+3 &nbsp; <span id="clock"></span></span>
+        <span>👤 axingkefu</span>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab" id="tab-pending" onclick="switchTab('pending')">待审核出款订单 <span class="tab-x" onclick="event.stopPropagation(); showToast('至少保留一个标签页')">✕</span></div>
+      <div class="tab active" id="tab-reviewed" onclick="switchTab('reviewed')">已审核出款订单 <span class="tab-x" onclick="event.stopPropagation(); showToast('至少保留一个标签页')">✕</span></div>
+      <div class="tab" id="tab-total" onclick="switchTab('total')">总出款记录 <span class="tab-x" onclick="event.stopPropagation(); showToast('至少保留一个标签页')">✕</span></div>
+      <div class="tab" id="tab-autopay" onclick="switchTab('autopay')">提现管理 <span class="tab-x" onclick="event.stopPropagation(); showToast('至少保留一个标签页')">✕</span></div>
+      <div class="tab" id="tab-merchant" onclick="switchTab('merchant')">代付商户管理 <span class="tab-x" onclick="event.stopPropagation(); showToast('至少保留一个标签页')">✕</span></div>
+    </div>
+
+    <div class="subtabs" id="autopay-subtabs" style="display:none;">
+      <div class="subtab" onclick="sidebarStub('提现通道配置')">提现通道配置</div>
+      <div class="subtab active">提现条件配置</div>
+      <div class="subtab" onclick="sidebarStub('提现等级配置')">提现等级配置</div>
+      <div class="subtab" onclick="sidebarStub('其他提现配置')">其他提现配置</div>
+    </div>
+
+    <!-- ============ 待审核出款订单 ============ -->
+    <div class="container" id="page-pending" style="display:none;">
+
+      <div class="filters">
+        <div class="f-item"><label>地区：</label><select><option>巴西</option></select></div>
+        <div class="f-item"><label>商户：</label><select><option>762</option></select></div>
+        <div class="f-item"><label>渠道：</label><select><option>全部</option></select></div>
+        <div class="f-item"><label>层级：</label><select><option>全部</option></select></div>
+        <div class="f-item combo-item">
+          <select class="combo-select">
+            <option>会员ID</option>
+            <option>会员账号</option>
+          </select>
+          <input class="combo-input" placeholder="请输入">
+        </div>
+        <div class="f-item"><label>订单号：</label><input placeholder="请输入"></div>
+
+        <div class="f-item"><label>外部订单号：</label><input placeholder="请输入"></div>
+        <div class="f-item"><label>订单状态：</label><select>
+          <option>全部</option><option>待审核</option><option>审核中</option><option>代付中</option><option>代付成功</option><option>代付失败</option><option>代付异常</option>
+        </select></div>
+        <div class="f-item"><label>出款类型：</label><select>
+          <option>全部</option><option>用户提现</option><option>佣金提现</option>
+        </select></div>
+        <div class="f-item"><label>代付平台：</label><select>
+          <option>全部</option><option>cbpay代付</option><option>Hambit代付</option><option>toppaynew代付</option><option>transafepay</option><option>模拟代付(测试用)</option><option>winpay</option><option>GLOBALPAYNEW代付</option>
+        </select></div>
+        <div class="f-item"><label>代付渠道：</label><select>
+          <option>全部</option><option>Bestpay代付</option><option>qqpay代付</option><option>Waterpay代付</option><option>FPAY代付</option><option>bcpay代付</option><option>CBPAY代付</option><option>DonePay代付</option><option>YunPay代付</option>
+        </select></div>
+        <div class="f-item"><label>出款方式：</label><select>
+          <option>全部</option><option>PIX</option>
+        </select></div>
+
+        <div class="f-item"><label>账号类型：</label><select><option>请选择</option></select></div>
+        <div class="f-item"><label>审核类型：</label><select>
+          <option>全部</option><option>免审不通过</option><option>自动代付条件不符</option>
+        </select></div>
+        <div class="f-item"><label>审核原因：</label><select><option>全部</option></select></div>
+        <div class="f-item wide"><label>提款金额：</label>
+          <div class="range"><input placeholder="最小金额"> ~ <input placeholder="最大金额"></div>
+        </div>
+        <div class="f-item wide"><label>创建时间：</label>
+          <div class="range"><input value="2026-07-07 00:00:00"> → <input value="2026-07-07 23:59:59"></div>
+        </div>
+
+        <div class="f-actions">
+          <label class="check-line"><input type="checkbox" checked> 查看全部</label>
+          <label class="check-line"><input type="checkbox"> 查看自动代付锁定订单</label>
+          <button class="btn btn-outline">重置</button>
+          <button class="btn btn-primary" onclick="showToast('已刷新查询结果')">查询</button>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <button class="btn btn-outline" onclick="bulkAction('批量锁定')">批量锁定</button>
+        <button class="btn btn-outline" onclick="bulkAction('批量解锁')">批量解锁</button>
+        <button class="btn btn-outline" onclick="bulkAction('批量拒绝')">批量拒绝</button>
+        <button class="btn btn-outline" onclick="bulkAction('批量罚没')">批量罚没</button>
+        <button class="btn btn-outline" onclick="bulkAction('批量代付')">批量代付</button>
+        <button class="btn btn-primary" onclick="bulkAction('批量异常处理')">批量异常处理</button>
+        <div class="spacer"></div>
+        <div class="icon-btn" title="刷新">↻</div>
+        <div class="icon-btn" title="列设置">☰</div>
+        <div class="icon-btn" title="更多">⚙</div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="selAll" onclick="toggleAll(this)"></th>
+              <th>会员ID</th>
+              <th>渠道</th>
+              <th>会员层级</th>
+              <th>操作人</th>
+              <th>订单号</th>
+              <th>代付单号</th>
+              <th>账号状态</th>
+              <th>出款类型</th>
+              <th>提款金额</th>
+              <th>手续费</th>
+              <th>实际出款</th>
+              <th>创建时间</th>
+              <th>绑定姓名</th>
+              <th>银行/账号类型</th>
+              <th>账户</th>
+              <th>出款方式</th>
+              <th>代付渠道</th>
+              <th>是否首次出款</th>
+              <th>订单状态</th>
+              <th>审核类型</th>
+              <th>操作备注</th>
+              <th>邀请ID</th>
+              <th>CPF ID</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+
+      <div class="footer-bar">
+        <span>共 <span id="rowCount">0</span> 条数据</span>
+        <span>页 1 &nbsp; 50 条/页</span>
+      </div>
+
+      <div class="legend-note">
+        <b>操作图例：</b>
+        明细（查看该笔订单的明细信息） · 锁定（锁定后该订单仅锁定人与最高权限账号可操作） · 解锁（所有具后台权限账号均可操作）·
+        处理（可通过 / 拒绝 / 罚没）· 拒绝（金额退回会员余额）· 罚没（金额直接扣除，不返回余额，不计入报表）·
+        代付（对该笔订单发起代付）· 更新订单状态（拉取最新订单状态）
+      </div>
+
+    </div>
+
+    <!-- ============ 已审核出款订单 ============ -->
+    <div class="container" id="page-reviewed">
+
+      <div class="filters">
+        <div class="f-item"><label>地区：</label><select><option>巴西</option></select></div>
+        <div class="f-item"><label>商户：</label><select><option>762</option></select></div>
+        <div class="f-item"><label>渠道：</label><select><option>全部</option></select></div>
+        <div class="f-item"><label>层级：</label><select><option>全部</option></select></div>
+        <div class="f-item combo-item">
+          <select class="combo-select" style="width:78px;">
+            <option>会员ID</option>
+          </select>
+          <input placeholder="请输入" style="border-radius:0 3px 3px 0;">
+        </div>
+        <div class="f-item"><label>订单状态：</label><select>
+          <option>全部</option><option>已完成</option><option>已拒绝</option><option>已罚没</option>
+        </select></div>
+
+        <div class="f-item"><label>出款类型：</label><select>
+          <option>全部</option><option>用户提现</option><option>佣金提现</option>
+        </select></div>
+        <div class="f-item"><label>代付平台：</label><select><option>全部</option></select></div>
+        <div class="f-item"><label>代付渠道：</label><select><option>全部</option></select></div>
+        <div class="f-item"><label>订单号：</label><input placeholder="请输入"></div>
+        <div class="f-item"><label>外部订单号：</label><input placeholder="请输入"></div>
+        <div class="f-item wide"><label>完成时间：</label>
+          <div class="range"><input value="2026-07-01 00:00:00"> → <input value="2026-07-09 23:59:59"></div>
+        </div>
+
+        <div class="f-item wide"><label>提款金额：</label>
+          <div class="range"><input placeholder="最小金额"> ~ <input placeholder="最大金额"></div>
+        </div>
+        <div class="f-item"><label>操作人：</label><input placeholder="请输入"></div>
+        <div class="f-item"><label>出款方式：</label><select><option>全部</option><option>PIX</option></select></div>
+        <div class="f-item"><label>账号类型：</label><select><option>请选择</option></select></div>
+        <div class="f-item"><label>处理方式：</label><select>
+          <option>全部</option><option>系统审核</option><option>人工审核</option><option>PIX代付</option>
+        </select></div>
+        <div class="f-item check-item"><input type="checkbox" id="firstOut"> <label for="firstOut">首次出款</label></div>
+
+        <div class="quick-row">
+          <button class="quick-btn" onclick="setRange('今天')">今天</button>
+          <button class="quick-btn" onclick="setRange('昨天')">昨天</button>
+          <button class="quick-btn" onclick="setRange('本周')">本周</button>
+          <button class="quick-btn" onclick="setRange('上周')">上周</button>
+          <button class="quick-btn" onclick="setRange('本月')">本月</button>
+          <button class="quick-btn" onclick="setRange('上月')">上月</button>
+          <div class="spacer"></div>
+          <button class="btn btn-outline">重置</button>
+          <button class="btn btn-primary" onclick="showToast('已刷新查询结果')">查询</button>
+        </div>
+      </div>
+
+      <div class="summary-wrap">
+        <div class="summary-head">
+          <button class="btn btn-outline" onclick="showToast('导出功能：将导出当前筛选条件下的数据为 Excel 文件')">导出</button>
+        </div>
+        <table class="summary">
+          <thead>
+            <tr>
+              <th>开始时间</th><th>结束时间</th><th>总人数</th><th>总订单数</th>
+              <th>总成功订单数</th><th>总提现金额</th><th>总手续费</th><th>实际出款金额</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>2026-07-01 00:00:00</td><td>2026-07-09 23:59:59</td><td>4165</td><td>8988</td>
+              <td>8635</td><td>1001053</td><td>0</td><td>1001053</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-wrap standalone">
+        <table class="main-table">
+          <thead>
+            <tr>
+              <th>序号</th>
+              <th>会员ID</th>
+              <th>会员层级</th>
+              <th>渠道</th>
+              <th>邀请ID</th>
+              <th>订单号</th>
+              <th>代付单号</th>
+              <th>账号状态</th>
+              <th>出款类型</th>
+              <th>提款金额</th>
+              <th>手续费</th>
+              <th>实际出款</th>
+              <th>绑定姓名</th>
+              <th>CPF ID</th>
+              <th>银行/账号类型</th>
+              <th>账户</th>
+              <th>出款方式</th>
+              <th>处理方式</th>
+              <th>代付渠道</th>
+              <th>是否首次出款</th>
+              <th>订单状态</th>
+              <th>创建时间</th>
+              <th>完成时间</th>
+              <th>操作备注</th>
+              <th>订单备注</th>
+              <th>操作信息</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="rvRows"></tbody>
+        </table>
+      </div>
+
+      <div class="footer-bar">
+        <span>共 8988 条数据</span>
+        <div class="pager">
+          <button class="active">1</button>
+          <button>2</button>
+          <button>3</button>
+          <button>4</button>
+          <button>5</button>
+          <span class="dots">...</span>
+          <button>180</button>
+          <select style="margin-left:10px; border:1px solid var(--border); border-radius:3px; padding:5px 8px; font-size:12.5px;">
+            <option>50条/页</option>
+          </select>
+          <div class="jump">跳至 <input> 页</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============ 总出款记录 ============ -->
+    <div class="container" id="page-total" style="display:none;">
+
+      <div class="filters">
+        <div class="f-item"><label>地区：</label><select><option>巴西</option></select></div>
+        <div class="f-item"><label>商户：</label><select><option>762</option></select></div>
+        <div class="f-item combo-item">
+          <select class="combo-select">
+            <option>会员ID</option>
+            <option>会员账号</option>
+          </select>
+          <input class="combo-input" placeholder="请输入">
+        </div>
+        <div class="f-item"><label>订单号：</label><input placeholder="请输入"></div>
+        <div class="f-item"><label>外部订单号：</label><input placeholder="请输入"></div>
+        <div class="f-item"><label>订单状态：</label><select>
+          <option>全部</option><option>已完成</option><option>已拒绝</option><option>已罚没</option>
+        </select></div>
+
+        <div class="f-item"><label>出款类型：</label><select>
+          <option>全部</option><option>用户提现</option><option>佣金提现</option>
+        </select></div>
+        <div class="f-item"><label>代付平台：</label><select><option>全部</option></select></div>
+        <div class="f-item"><label>代付渠道：</label><select><option>全部</option></select></div>
+        <div class="f-item wide"><label>完成时间：</label>
+          <div class="range"><input value="2026-06-01 13:55:42"> → <input value="2026-06-30 23:59:59"></div>
+        </div>
+        <div class="f-item"><label>出款方式：</label><select><option>全部</option><option>PIX</option></select></div>
+        <div class="f-item"><label>账号类型：</label><select><option>请选择</option></select></div>
+
+        <div class="quick-row">
+          <button class="quick-btn" onclick="setRange('今天')">今天</button>
+          <button class="quick-btn" onclick="setRange('昨天')">昨天</button>
+          <button class="quick-btn" onclick="setRange('本周')">本周</button>
+          <button class="quick-btn" onclick="setRange('上周')">上周</button>
+          <button class="quick-btn" onclick="setRange('本月')">本月</button>
+          <button class="quick-btn" onclick="setRange('上月')">上月</button>
+          <div class="spacer"></div>
+          <button class="btn btn-outline">重置</button>
+          <button class="btn btn-primary" onclick="showToast('已刷新查询结果')">查询</button>
+        </div>
+      </div>
+
+      <div class="summary-wrap">
+        <div class="summary-head">
+          <button class="btn btn-outline" onclick="showToast('导出功能：将导出当前筛选条件下的数据为 Excel 文件')">导出</button>
+        </div>
+      </div>
+
+      <div class="table-wrap standalone">
+        <table class="main-table">
+          <thead>
+            <tr>
+              <th>会员ID</th>
+              <th>会员账号</th>
+              <th>邀请ID</th>
+              <th>操作人</th>
+              <th>订单号</th>
+              <th>代付单号</th>
+              <th>账号状态</th>
+              <th>出款类型</th>
+              <th>提款金额</th>
+              <th>手续费</th>
+              <th>实际出款</th>
+              <th>绑定姓名</th>
+              <th>CPF ID</th>
+              <th>银行/账号类型</th>
+              <th>出款方式</th>
+              <th>处理方式</th>
+              <th>代付渠道</th>
+              <th>是否首次出款</th>
+              <th>订单状态</th>
+              <th>账户</th>
+              <th>创建时间</th>
+              <th>完成时间</th>
+              <th>订单备注</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="totalRows"></tbody>
+        </table>
+      </div>
+
+      <div class="footer-bar">
+        <span>共 35759 条数据</span>
+        <div class="pager">
+          <button class="active">1</button>
+          <button>2</button>
+          <button>3</button>
+          <button>4</button>
+          <button>5</button>
+          <span class="dots">...</span>
+          <button>716</button>
+          <select style="margin-left:10px; border:1px solid var(--border); border-radius:3px; padding:5px 8px; font-size:12.5px;">
+            <option>50条/页</option>
+          </select>
+          <div class="jump">跳至 <input> 页</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============ 提现管理（自动代付配置） ============ -->
+    <div class="container" id="page-autopay" style="display:none;">
+      <div class="panel">
+        <div class="panel-cols">
+
+          <!-- 会员提款条件限制 -->
+          <div>
+            <div class="col-title">会员提款条件限制</div>
+            <label class="radio-line"><input type="radio" name="withdrawLimit" checked> 无限制</label>
+            <label class="radio-line"><input type="radio" name="withdrawLimit"> 需绑定手机号码</label>
+          </div>
+
+          <!-- 提款审核限制 -> 自动代付配置 -->
+          <div>
+            <div class="col-title">提款审核限制</div>
+
+            <!-- 0. 免审风控开关 -->
+            <div class="cfg-block">
+              <div class="cfg-row">
+                <div>
+                  <div class="cfg-label">免审风控开关</div>
+                  <div class="cfg-hint">开启后，可指定会员层级作为「免审不通过」的判定条件；只要会员被打上以下所选任一层级标签，其提现订单一律判定为免审不通过，必须转人工审核（第一期免审风控条件仅支持按会员层级判断）。</div>
+                </div>
+                <div class="switch on" id="sw-riskcontrol" onclick="toggleSwitch('sw-riskcontrol', onRiskControlToggle)"><div class="knob"></div></div>
+              </div>
+              <div id="block-tier-select" style="margin-top:14px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                  <span style="font-size:12.5px; color:var(--text-dim);">强制人工审核的会员层级：</span>
+                  <button class="btn btn-outline" style="padding:5px 16px;" onclick="openTierSelect()">修改</button>
+                </div>
+                <div id="tierChipWrap"></div>
+              </div>
+            </div>
+
+            <!-- 1. 自动代付开关 -->
+            <div class="cfg-block">
+              <div class="cfg-row">
+                <div>
+                  <div class="cfg-label">自动代付开关</div>
+                  <div class="cfg-hint">开启时，符合免审条件及自动代付金额范围内的订单，系统将自动发起代付；关闭时，所有订单需要人工处理。</div>
+                </div>
+                <div class="switch on" id="sw-autopay" onclick="toggleSwitch('sw-autopay', onAutoPayToggle)"><div class="knob"></div></div>
+              </div>
+            </div>
+
+            <!-- 2. 自动代付金额范围 -->
+            <div class="cfg-block" id="block-amount">
+              <div class="cfg-label">自动代付金额范围</div>
+              <div class="cfg-hint">只有提款金额落在以下范围内（含最小值与最大值本身）的订单，才会触发自动代付；超出范围的订单将转入人工审核。</div>
+              <div class="amount-range">
+                <input id="amt-min" type="number" value="10" placeholder="最小金额">
+                <span>~</span>
+                <input id="amt-max" type="number" value="2000" placeholder="最大金额">
+                <span style="color:var(--text-dim); font-size:12px;">雷亚尔</span>
+              </div>
+            </div>
+
+            <!-- 2.5 首次出款强制人工审核 -->
+            <div class="cfg-block" id="block-firstout">
+              <div class="cfg-row">
+                <div>
+                  <div class="cfg-label">首次出款强制人工审核</div>
+                  <div class="cfg-hint">开启时，会员的首次出款订单一律转人工审核，<b>不受自动代付金额范围限制</b>，即使金额落在自动代付范围内也不会自动代付；关闭时，首次出款订单与其他订单一样按金额范围规则判断。</div>
+                </div>
+                <div class="switch on" id="sw-firstout" onclick="toggleSwitch('sw-firstout', onFirstOutToggle)"><div class="knob"></div></div>
+              </div>
+            </div>
+
+            <!-- 3. 代付失败自动驳回 -->
+            <div class="cfg-block" id="block-autoreject">
+              <div class="cfg-row">
+                <div>
+                  <div class="cfg-label">代付失败自动驳回</div>
+                  <div class="cfg-hint">代付订单尝试所有符合出款金额条件的代付渠道，本轮尝试若全部失败，订单立即自动拒绝，提现金额退回会员账户（本期不做轮询重试或超时等待）。</div>
+                </div>
+                <div class="switch on" id="sw-autoreject" onclick="toggleSwitch('sw-autoreject')"><div class="knob"></div></div>
+              </div>
+            </div>
+
+            <!-- 4. 自动代付渠道配置 -->
+            <div class="cfg-block" id="block-channels">
+              <div class="cfg-label">自动代付渠道配置</div>
+              <div class="cfg-hint">配置哪些渠道用于自动代付，以及渠道自动下架的判定标准。<span class="cfg-hint danger">为避免渠道被自动下架导致自动代付无渠道可用，建议将下架标准配置为「不自动下架」。渠道下架/禁用时，其下仍在进行中的订单会统一转为「代付异常」，交由人工核实是否补单。</span></div>
+
+              <table class="channel-cfg">
+                <thead>
+                  <tr>
+                    <th style="width:140px;">代付渠道</th>
+                    <th style="width:90px;">上架自动代付</th>
+                    <th>下架标准</th>
+                  </tr>
+                </thead>
+                <tbody id="channelCfgBody"></tbody>
+              </table>
+            </div>
+
+            <div class="actions-row">
+              <button class="btn btn-primary" onclick="saveConfig()">保存</button>
+              <button class="btn btn-outline" onclick="resetConfig()">重置</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 代付商户管理 ============ -->
+    <div class="container" id="page-merchant" style="display:none;">
+
+      <div class="merchant-filter-row">
+        <span style="font-size:12.5px; color:var(--text-dim);">最近操作时间：</span>
+        <input placeholder="开始"> <span>→</span> <input placeholder="结束">
+        <input placeholder="请输入通道号/通道名称/平台" style="flex:1; min-width:200px;">
+        <button class="btn btn-outline" onclick="showToast('已重置筛选条件')">重置</button>
+        <button class="btn btn-primary" onclick="showToast('已刷新查询结果')">查询</button>
+      </div>
+      <div class="hint-red">当前时间为 UTC-3 时区</div>
+
+      <div class="merchant-toolbar">
+        <button class="btn btn-primary" onclick="openMerchantForm()">添加</button>
+        <div class="icon-btn" title="刷新" onclick="showToast('已刷新')">↻</div>
+        <div class="icon-btn" title="列设置" onclick="sidebarStub('列设置')">☰</div>
+        <div class="icon-btn" title="更多" onclick="sidebarStub('更多设置')">⚙</div>
+      </div>
+
+      <div class="table-wrap standalone">
+        <table class="merchant-table">
+          <thead>
+            <tr>
+              <th>排序</th>
+              <th>三方通道号/代付渠道/代付平台</th>
+              <th>通道说明</th>
+              <th>币种</th>
+              <th>单位</th>
+              <th>状态</th>
+              <th>最近操作时间</th>
+              <th>最近操作人</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="merchantRows"></tbody>
+        </table>
+      </div>
+
+      <div class="footer-bar">
+        <span>共 5 条数据</span>
+        <div class="pager">
+          <button class="active">1</button>
+          <select style="margin-left:10px; border:1px solid var(--border); border-radius:3px; padding:5px 8px; font-size:12.5px;">
+            <option>50条/页</option>
+          </select>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ 待审核出款订单：弹窗 ============ -->
+
+<!-- 订单明细弹窗（待审核） -->
+<div class="overlay" id="detailOverlay">
+  <div class="modal detail-modal">
+    <div class="modal-titlebar"><h3>订单明细</h3><button class="close-x" onclick="closeOverlay('detailOverlay')">✕</button></div>
+    <div class="detail-body">
+      <div class="detail-left">
+        <table class="kv-table" id="detailKvTable"></table>
+      </div>
+      <div class="detail-right">
+        <table class="stat-table" id="detailStatTable"></table>
+      </div>
+    </div>
+    <div class="detail-process-actions" id="detailProcessActions"></div>
+  </div>
+</div>
+
+<!-- 拒绝弹窗 -->
+<div class="overlay" id="rejectOverlay">
+  <div class="modal">
+    <div class="modal-titlebar"><h3>拒绝</h3><button class="close-x" onclick="closeOverlay('rejectOverlay')">✕</button></div>
+    <div class="remark-block">
+      <label>操作备注：</label>
+      <textarea id="rejectOpNote" placeholder="请输入备注"></textarea>
+      <div class="remark-hint">此备注会以邮件的方式发送给用户，并且显示在提款详情页面</div>
+    </div>
+    <div class="remark-block">
+      <label>订单备注：</label>
+      <textarea id="rejectOrderNote" placeholder="请输入备注"></textarea>
+      <div class="remark-hint">此备注只会显示在后台</div>
+    </div>
+    <div class="modal-actions" style="justify-content:center;">
+      <button class="btn btn-primary" style="padding:8px 40px;" onclick="confirmReject()">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- 人工完成弹窗 -->
+<div class="overlay" id="manualOverlay">
+  <div class="modal">
+    <div class="modal-titlebar"><h3>人工完成</h3><button class="close-x" onclick="closeOverlay('manualOverlay')">✕</button></div>
+    <div class="remark-block">
+      <label>操作备注：</label>
+      <textarea id="manualOpNote" placeholder="请输入备注"></textarea>
+      <div class="remark-hint">此备注会以邮件的方式发送给用户，并且显示在提款详情页面</div>
+    </div>
+    <div class="remark-block">
+      <label>订单备注：</label>
+      <textarea id="manualOrderNote" placeholder="请输入备注"></textarea>
+      <div class="remark-hint">此备注只会显示在后台</div>
+    </div>
+    <div class="modal-actions" style="justify-content:center;">
+      <button class="btn btn-primary" style="padding:8px 40px;" onclick="confirmManual()">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- 罚没弹窗 -->
+<div class="overlay" id="forfeitOverlay">
+  <div class="modal">
+    <div class="modal-titlebar"><h3>罚没</h3><button class="close-x" onclick="closeOverlay('forfeitOverlay')">✕</button></div>
+    <div class="remark-block">
+      <label>操作备注：</label>
+      <textarea id="forfeitOpNote" placeholder="请输入备注"></textarea>
+      <div class="remark-hint">此备注会以邮件的方式发送给用户，并且显示在提款详情页面</div>
+    </div>
+    <div class="remark-block">
+      <label>订单备注：</label>
+      <textarea id="forfeitOrderNote" placeholder="请输入备注"></textarea>
+      <div class="remark-hint">此备注只会显示在后台</div>
+    </div>
+    <div class="modal-actions" style="justify-content:center;">
+      <button class="btn btn-primary" style="padding:8px 40px;" onclick="confirmForfeit()">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- 锁定确认弹窗 -->
+<div class="overlay" id="lockOverlay">
+  <div class="modal">
+    <div class="modal-head"><span class="warn-ic">⚠</span> 操作提示</div>
+    <div class="modal-body" id="lockMsg">是否确认要锁定该订单？</div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeOverlay('lockOverlay')">取消</button>
+      <button class="btn btn-primary" onclick="confirmLock()">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- 代付弹窗 -->
+<div class="overlay" id="payOverlay">
+  <div class="modal wide">
+    <div class="modal-titlebar"><h3>代付</h3><button class="close-x" onclick="closeOverlay('payOverlay')">✕</button></div>
+    <div class="modal-body" style="margin-bottom:8px;">订单信息</div>
+    <table class="mini-table" id="payInfoTable"></table>
+    <div class="modal-body" style="margin-bottom:8px;">请选择代付渠道：</div>
+    <div class="channel-list" id="channelList"></div>
+    <div class="pay-warning" id="payWarning" style="display:none;">代付渠道余额不足</div>
+    <div class="modal-actions" style="justify-content:center;">
+      <button class="btn btn-primary" id="payConfirmBtn" style="padding:8px 40px;" onclick="doPay()">出款</button>
+    </div>
+  </div>
+</div>
+
+<!-- 代付结果弹窗 -->
+<div class="overlay" id="payResultOverlay">
+  <div class="modal wide">
+    <div class="modal-titlebar"><h3>代付结果</h3><button class="close-x" onclick="closeOverlay('payResultOverlay')">✕</button></div>
+    <table class="mini-table" id="payResultTable"></table>
+    <div class="modal-actions" style="justify-content:center;">
+      <button class="btn btn-primary" style="padding:8px 40px;" onclick="closeOverlay('payResultOverlay')">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 已审核出款订单：弹窗 ============ -->
+
+<!-- 订单明细弹窗（已审核） -->
+<div class="overlay" id="rvDetailOverlay">
+  <div class="modal detail-modal">
+    <div class="modal-titlebar"><h3>订单明细</h3><button class="close-x" onclick="closeOverlay('rvDetailOverlay')">✕</button></div>
+    <div class="detail-body">
+      <div class="detail-left">
+        <table class="kv-table" id="rvDetailKvTable"></table>
+      </div>
+      <div class="detail-right">
+        <table class="stat-table" id="rvDetailStatTable"></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 总出款记录：弹窗 ============ -->
+
+<!-- 订单明细弹窗（总出款记录） -->
+<div class="overlay" id="totalDetailOverlay">
+  <div class="modal detail-modal">
+    <div class="modal-titlebar"><h3>订单明细</h3><button class="close-x" onclick="closeOverlay('totalDetailOverlay')">✕</button></div>
+    <div class="detail-body">
+      <div class="detail-left">
+        <table class="kv-table" id="totalDetailKvTable"></table>
+      </div>
+      <div class="detail-right">
+        <table class="stat-table" id="totalDetailStatTable"></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 提现管理：弹窗 ============ -->
+
+<!-- 会员层级多选弹窗 -->
+<div class="overlay" id="tierSelectOverlay">
+  <div class="modal" style="width:460px;">
+    <div class="modal-titlebar"><h3>选择强制人工审核的会员层级</h3><button class="close-x" onclick="closeOverlay('tierSelectOverlay')">✕</button></div>
+    <div class="tier-checklist" id="tierCheckList"></div>
+    <div class="modal-actions" style="margin-top:18px;">
+      <button class="btn btn-outline" onclick="closeOverlay('tierSelectOverlay')">取消</button>
+      <button class="btn btn-primary" onclick="confirmTierSelect()">确认</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 代付商户管理：弹窗 ============ -->
+
+<!-- 添加/编辑 渠道 弹窗 -->
+<div class="overlay" id="merchantFormOverlay">
+  <div class="modal" style="width:560px;">
+    <div class="modal-titlebar"><h3 id="merchantFormTitle">添加</h3><button class="close-x" onclick="closeOverlay('merchantFormOverlay')">✕</button></div>
+    <div class="form-grid">
+      <div class="form-row">
+        <label><span class="req">*</span>代付平台</label>
+        <div class="form-control">
+          <select id="mf-platform">
+            <option value="">请选择</option>
+            <option>bestpay代付</option>
+            <option>YDpay代付</option>
+            <option>创辉代付</option>
+            <option>Waterpay代付</option>
+            <option>CBPAY代付</option>
+            <option>DonePay代付</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>三方通道号</label>
+        <div class="form-control"><input id="mf-channelno" placeholder="请输入"></div>
+      </div>
+      <div class="form-row">
+        <label><span class="req">*</span>代付渠道</label>
+        <div class="form-control"><input id="mf-channelname" placeholder="请输入"></div>
+      </div>
+      <div class="form-row">
+        <label><span class="req">*</span>代付方式</label>
+        <div class="form-control">
+          <select id="mf-method">
+            <option value="">请选择</option>
+            <option>PIX</option>
+            <option>USDT</option>
+            <option>银行卡</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <label><span class="req">*</span>排序</label>
+        <div class="form-control"><input id="mf-sort" type="number" placeholder="请输入"></div>
+      </div>
+      <div class="form-row">
+        <label>通道说明</label>
+        <div class="form-control"><textarea id="mf-note" placeholder="请输入"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:20px;">
+      <button class="btn btn-outline" onclick="closeOverlay('merchantFormOverlay')">取消</button>
+      <button class="btn btn-primary" onclick="confirmMerchantForm()">确认</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="actTooltip"><div class="tip-icon" id="actTooltipIcon"></div><div class="tip-label" id="actTooltipLabel"></div></div>
+
+<script>
+/* ======================================================================
+   共享工具函数：Tab 切换 / 侧边栏 / 时钟 / Toast / 弹窗开关 / 统计生成
+   ====================================================================== */
+
+const tabIds = ['pending', 'reviewed', 'total', 'autopay', 'merchant'];
+const tabLabels = {
+  pending: '待审核出款订单',
+  reviewed: '已审核出款订单',
+  total: '总出款记录',
+  autopay: '提现管理',
+  merchant: '代付商户管理'
+};
+const tabModules = {
+  pending: '商户财务管理',
+  reviewed: '商户财务管理',
+  total: '商户财务管理',
+  autopay: '商户财务配置',
+  merchant: '商户财务配置'
+};
+function switchTab(name){
+  tabIds.forEach(id => {
+    const page = document.getElementById('page-' + id);
+    const tab = document.getElementById('tab-' + id);
+    const side = document.getElementById('side-' + id);
+    if(page) page.style.display = (id === name) ? 'block' : 'none';
+    if(tab) tab.classList.toggle('active', id === name);
+    if(side) side.classList.toggle('active', id === name);
+  });
+  document.getElementById('crumbText').textContent = tabLabels[name];
+  document.getElementById('crumbModule').textContent = tabModules[name];
+  document.getElementById('autopay-subtabs').style.display = (name === 'autopay') ? 'flex' : 'none';
+}
+
+function sidebarStub(name){
+  showToast('「' + name + '」页面暂未在此原型中实现');
+}
+
+function fmtClock(){
+  const el = document.getElementById('clock');
+  const now = new Date();
+  el.textContent = now.toISOString().slice(0,19).replace('T',' ');
+}
+setInterval(fmtClock, 1000); fmtClock();
+
+function closeOverlay(id){
+  document.getElementById(id).classList.remove('show');
+}
+
+let toastTimer;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function hashSeed(str){
+  let h = 0;
+  for(let i=0;i<str.length;i++){ h = (h*31 + str.charCodeAt(i)) >>> 0; }
+  return h;
+}
+function seededStats(id){
+  const h = hashSeed(id);
+  const todayDeposit = (h % 90) + 5;
+  const histDeposit = todayDeposit + (h % 200);
+  const todayWithdraw = (h >> 3) % 60;
+  const histWithdraw = todayWithdraw + ((h >> 3) % 300);
+  const todayPL = +(((h % 4000) / 100) - 20).toFixed(2);
+  const histPL = +(todayPL + (((h >> 5) % 6000) / 100) - 30).toFixed(2);
+  return {todayDeposit, histDeposit, todayWithdraw, histWithdraw, todayPL, histPL};
+}
+function copyText(text){
+  showToast('已复制：' + text);
+}
+
+/* ======================================================================
+   待审核出款订单
+   ====================================================================== */
+
+const channels = [
+  {name:'Bestpay代付', balance:91608.28},
+  {name:'Waterpay代付', balance:4.23},
+  {name:'CBPAY代付', balance:17.22},
+  {name:'DonePay代付', balance:4503.07},
+  {name:'YunPay代付', balance:0},
+];
+
+let data = [
+  {
+    id:'3782963300', channel:'FB/278周周3-44886', level:'10000雷', operator:'axingkefu',
+    order:'TX17834045429302871712', payOrder:'', account:'正式', outType:'用户提现',
+    amount:800, fee:0, actual:800, created:'2026-07-07 03:09:02', bindName:'Gerson Jos',
+    bankType:'PHONE', acct:'6599340383', payMethod:'PIX', payChannel:'', firstOut:'否',
+    status:'审核中', reviewType:'自动代付条件不符', note:'自动', invite:'-', cpf:'69231010182',
+    locked:false, lockedBy:null
+  },
+  {
+    id:'3968986972', channel:'FB/278周周3-44886', level:'5000雷', operator:'',
+    order:'TX17833946700609856204', payOrder:'', account:'正式', outType:'用户提现',
+    amount:800, fee:0, actual:800, created:'2026-07-07 00:25:00', bindName:'Ana Souza',
+    bankType:'PHONE', acct:'5599112233', payMethod:'PIX', payChannel:'', firstOut:'否',
+    status:'待审核', reviewType:'', note:'', invite:'-', cpf:'52931010111',
+    locked:true, lockedBy:'axingkefu'
+  },
+  {
+    id:'3454510146', channel:'FB/258-乐多1-43001', level:'500雷', operator:'',
+    order:'TX17833946618646227963', payOrder:'', account:'正式', outType:'用户提现',
+    amount:50, fee:0, actual:50, created:'2026-07-07 00:24:40', bindName:'João Lima',
+    bankType:'PHONE', acct:'5599004411', payMethod:'PIX', payChannel:'', firstOut:'否',
+    status:'待审核', reviewType:'', note:'', invite:'-', cpf:'11223344556',
+    locked:true, lockedBy:'axingkefu'
+  },
+  {
+    id:'3237901806', channel:'FB/215早早1-40264', level:'1000雷', operator:'',
+    order:'TX17833947130337361486', payOrder:'', account:'正式', outType:'用户提现',
+    amount:20, fee:0, actual:20, created:'2026-07-07 00:24:10', bindName:'Carla Dias',
+    bankType:'PHONE', acct:'5599887766', payMethod:'PIX', payChannel:'', firstOut:'否',
+    status:'待审核', reviewType:'', note:'', invite:'-', cpf:'99887766554',
+    locked:true, lockedBy:'axingkefu'
+  },
+  {
+    id:'3100532694', channel:'35756', level:'100雷', operator:'',
+    order:'TX17833942259551290361', payOrder:'', account:'正式', outType:'用户提现',
+    amount:20, fee:0, actual:20, created:'2026-07-07 00:18:04', bindName:'Paulo Sérgio',
+    bankType:'PHONE', acct:'27981286987', payMethod:'PIX', payChannel:'', firstOut:'否',
+    status:'待审核', reviewType:'', note:'', invite:'-', cpf:'12345678900',
+    locked:false, lockedBy:null
+  },
+];
+
+let pendingLockIndex = null;
+let pendingPayIndices = [];
+let selectedChannel = 0;
+
+function render(){
+  const tbody = document.getElementById('rows');
+  tbody.innerHTML = '';
+  data.forEach((row, i) => {
+    const tr = document.createElement('tr');
+    tr.id = 'row-'+i;
+    const statusClassMap = {
+      '待审核':'status-pending', '审核中':'status-review', '代付中':'status-paying',
+      '代付成功':'status-paysuccess', '代付失败':'status-payfail', '代付异常':'status-payerror'
+    };
+    const statusClass = statusClassMap[row.status] || 'status-pending';
+    tr.innerHTML = `
+      <td><input type="checkbox" class="rowchk" data-i="${i}"></td>
+      <td><span class="id-link">${row.id}</span></td>
+      <td>${row.channel}</td>
+      <td>${row.level}</td>
+      <td>${row.operator || '-'}</td>
+      <td style="font-family:var(--mono)">${row.order}</td>
+      <td style="font-family:var(--mono)">${row.payOrder || '-'}</td>
+      <td><span class="status-pill status-normal">${row.account}</span></td>
+      <td>${row.outType}</td>
+      <td><b>${row.amount}</b></td>
+      <td>${row.fee}</td>
+      <td>${row.actual}</td>
+      <td>${row.created}</td>
+      <td>${row.bindName}</td>
+      <td>${row.bankType}</td>
+      <td>${row.acct}</td>
+      <td>${row.payMethod}</td>
+      <td>${row.payChannel || '-'}</td>
+      <td>${row.firstOut}</td>
+      <td><span class="status-pill ${statusClass}">${row.status}</span></td>
+      <td>${row.reviewType ? `<span class="badge">${row.reviewType}</span>` : '-'}</td>
+      <td>${row.note || '-'}</td>
+      <td>${row.invite}</td>
+      <td>${row.cpf}</td>
+      <td><div class="actions">${renderActions(row, i)}</div></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('rowCount').textContent = data.length;
+}
+
+function renderActions(row, i){
+  let html = actBtn('detail', '≡', '明细', `showDetail(${i})`);
+  if(!row.locked){
+    html += actBtn('lock', '🔒', '锁定', `openLock(${i})`);
+  } else {
+    html += actBtn('unlock', '🔓', '解锁', `unlock(${i})`);
+    if(row.status === '待审核' || row.status === '审核中'){
+      html += actBtn('process', '🗂', '处理', `showDetail(${i}, true)`);
+      html += actBtn('reject', '↺', '拒绝', `quickAction(${i},'拒绝')`);
+      html += actBtn('confiscate', '⊘', '罚没', `quickAction(${i},'罚没')`);
+      html += actBtn('pay', 'Ⓟ', '代付', `openPay(${i})`);
+    } else {
+      html += actBtn('refresh', '↻', '更新订单状态', `refreshStatus(${i})`);
+    }
+  }
+  return html;
+}
+
+function actBtn(cls, icon, label, onclickAttr){
+  return `<button class="act ${cls}" onclick="${onclickAttr}" onmouseenter="showActTip(this,'${cls}','${icon}','${label}')" onmouseleave="hideActTip()">${icon}</button>`;
+}
+
+function showActTip(el, cls, icon, label){
+  const tip = document.getElementById('actTooltip');
+  const iconEl = document.getElementById('actTooltipIcon');
+  const labelEl = document.getElementById('actTooltipLabel');
+  iconEl.className = 'tip-icon ' + cls;
+  iconEl.textContent = icon;
+  labelEl.textContent = label;
+  const rect = el.getBoundingClientRect();
+  tip.style.left = (rect.left + rect.width / 2) + 'px';
+  tip.style.top = (rect.top - 8) + 'px';
+  tip.classList.add('show');
+}
+function hideActTip(){
+  document.getElementById('actTooltip').classList.remove('show');
+}
+
+function toggleAll(el){
+  document.querySelectorAll('.rowchk').forEach(c => c.checked = el.checked);
+  document.querySelectorAll('#rows tr').forEach(tr => tr.classList.toggle('selected', el.checked));
+}
+
+document.addEventListener('change', (e) => {
+  if(e.target.classList.contains('rowchk')){
+    const tr = document.getElementById('row-'+e.target.dataset.i);
+    tr.classList.toggle('selected', e.target.checked);
+  }
+});
+
+function openLock(i){
+  pendingLockIndex = i;
+  document.getElementById('lockMsg').textContent = '是否确认要锁定该订单？';
+  document.getElementById('lockOverlay').classList.add('show');
+}
+function confirmLock(){
+  if(pendingLockIndex !== null){
+    data[pendingLockIndex].locked = true;
+    data[pendingLockIndex].lockedBy = 'axingkefu';
+    data[pendingLockIndex].operator = 'axingkefu';
+    render();
+    showToast('订单已锁定，当前仅锁定账号可操作');
+  }
+  closeOverlay('lockOverlay');
+}
+function unlock(i){
+  data[i].locked = false;
+  data[i].lockedBy = null;
+  render();
+  showToast('订单已解锁，所有权限账号可操作');
+}
+function refreshStatus(i){
+  if(data[i].status === '代付中'){
+    const roll = Math.random();
+    data[i].status = roll < 0.7 ? '代付成功' : (roll < 0.9 ? '代付失败' : '代付异常');
+    render();
+  }
+  showToast('已拉取最新订单状态：' + data[i].status);
+}
+
+function quickAction(i, type){
+  if(type === '拒绝'){ openReject([i]); }
+  if(type === '罚没'){ openForfeit([i]); }
+}
+
+let pendingRejectIndices = [];
+function openReject(indices){
+  pendingRejectIndices = indices;
+  document.getElementById('rejectOpNote').value = '';
+  document.getElementById('rejectOrderNote').value = '';
+  document.getElementById('rejectOverlay').classList.add('show');
+}
+function confirmReject(){
+  const count = pendingRejectIndices.length;
+  pendingRejectIndices
+    .slice()
+    .sort((a,b) => b - a)
+    .forEach(i => { data.splice(i, 1); });
+  render();
+  closeOverlay('rejectOverlay');
+  showToast('已拒绝 ' + count + ' 条订单，金额已退回会员余额');
+}
+
+let pendingForfeitIndices = [];
+function openForfeit(indices){
+  pendingForfeitIndices = indices;
+  document.getElementById('forfeitOpNote').value = '';
+  document.getElementById('forfeitOrderNote').value = '';
+  document.getElementById('forfeitOverlay').classList.add('show');
+}
+function confirmForfeit(){
+  const count = pendingForfeitIndices.length;
+  pendingForfeitIndices
+    .slice()
+    .sort((a,b) => b - a)
+    .forEach(i => { data.splice(i, 1); });
+  render();
+  closeOverlay('forfeitOverlay');
+  showToast('已罚没 ' + count + ' 条订单，金额不返还会员，不计入报表');
+}
+
+let pendingManualIndices = [];
+function openManual(indices){
+  pendingManualIndices = indices;
+  document.getElementById('manualOpNote').value = '';
+  document.getElementById('manualOrderNote').value = '';
+  document.getElementById('manualOverlay').classList.add('show');
+}
+function confirmManual(){
+  const count = pendingManualIndices.length;
+  pendingManualIndices
+    .slice()
+    .sort((a,b) => b - a)
+    .forEach(i => { data.splice(i, 1); });
+  render();
+  closeOverlay('manualOverlay');
+  showToast('已将 ' + count + ' 条订单标记为人工完成');
+}
+
+function openPay(i){
+  openPayMulti([i]);
+}
+function openPayMulti(indices){
+  pendingPayIndices = indices;
+  selectedChannel = 0;
+  const rows = indices.map(i => data[i]);
+  const bodyRows = rows.map(row => `
+    <tr>
+      <td style="font-family:var(--mono)">${row.order}</td>
+      <td>${row.id}</td><td>巴西</td><td>762</td><td>${row.payMethod}</td>
+      <td>${row.amount}</td><td>${row.fee}</td><td>${row.actual}</td>
+      <td>${row.bindName}</td><td>${row.acct}</td>
+    </tr>`).join('');
+  document.getElementById('payInfoTable').innerHTML = `
+    <tr><th>订单号</th><th>会员ID</th><th>地区</th><th>商户</th><th>出款方式</th><th>出款金额</th><th>手续费</th><th>实际出款</th><th>绑定姓名</th><th>账户</th></tr>
+    ${bodyRows}`;
+  const list = document.getElementById('channelList');
+  list.innerHTML = channels.map((c, ci) => {
+    const disabled = c.balance <= 0;
+    return `<label class="channel-opt ${ci===0?'selected':''} ${disabled?'disabled':''}" data-ci="${ci}" onclick="${disabled?'':'selectChannel('+ci+')'}">
+      <input type="radio" name="ch" ${ci===0?'checked':''} ${disabled?'disabled':''}>
+      ${c.name}（余额: ${c.balance}）
+      <span class="refresh-link" onclick="event.stopPropagation(); refreshChannel(${ci})">刷新</span>
+    </label>`;
+  }).join('');
+  document.getElementById('payOverlay').classList.add('show');
+  updatePayButtonState();
+}
+function requiredPayTotal(){
+  return pendingPayIndices.reduce((sum, i) => sum + data[i].actual, 0);
+}
+function updatePayButtonState(){
+  const ch = channels[selectedChannel];
+  const needed = requiredPayTotal();
+  const insufficient = ch.balance < needed;
+  const btn = document.getElementById('payConfirmBtn');
+  const warning = document.getElementById('payWarning');
+  btn.disabled = insufficient;
+  warning.style.display = insufficient ? 'block' : 'none';
+  warning.textContent = insufficient
+    ? `代付渠道余额不足（需要 ${needed}，${ch.name} 余额 ${ch.balance}），请更换代付渠道`
+    : '';
+}
+function selectChannel(ci){
+  selectedChannel = ci;
+  document.querySelectorAll('.channel-opt').forEach((el,idx) => {
+    el.classList.toggle('selected', idx === ci);
+    el.querySelector('input').checked = (idx === ci);
+  });
+  updatePayButtonState();
+}
+function refreshChannel(ci){
+  showToast('已刷新 ' + channels[ci].name + ' 余额');
+  if(ci === selectedChannel) updatePayButtonState();
+}
+function doPay(){
+  const indices = pendingPayIndices;
+  const ch = channels[selectedChannel];
+  if(ch.balance < requiredPayTotal()){
+    updatePayButtonState();
+    showToast('代付渠道余额不足，请更换代付渠道');
+    return;
+  }
+  const results = indices.map((i, idx) => {
+    data[i].payChannel = ch.name;
+    data[i].payOrder = 'PO_260707' + Math.random().toString(16).slice(2,18);
+    data[i].status = '代付中';
+    return `<tr>
+      <td>${idx+1}</td>
+      <td><span class="result-ok">✓ 成功</span></td>
+      <td>代付成功</td>
+      <td style="font-family:var(--mono)">${data[i].order}</td>
+    </tr>`;
+  });
+  document.getElementById('payResultTable').innerHTML = `
+    <tr><th>序号</th><th>订单状态</th><th>订单信息</th><th>订单号</th></tr>
+    ${results.join('')}`;
+  closeOverlay('payOverlay');
+  document.getElementById('payResultOverlay').classList.add('show');
+  render();
+}
+
+function showDetail(i, processMode){
+  const row = data[i];
+  const s = seededStats(row.id + row.order);
+  document.getElementById('detailKvTable').innerHTML = `
+    <tr><td>订单号：</td><td>${row.order}</td></tr>
+    <tr><td>代付单号：</td><td>${row.payOrder || ''}</td></tr>
+    <tr><td>会员ID：</td><td><span class="id-link">${row.id}</span></td></tr>
+    <tr><td>账号状态：</td><td>${row.account}</td></tr>
+    <tr><td>地区：</td><td>巴西</td></tr>
+    <tr><td>商户：</td><td>762</td></tr>
+    <tr><td>出款方式：</td><td>${row.payMethod}</td></tr>
+    <tr><td>出款类型：</td><td>${row.outType}</td></tr>
+    <tr><td>绑定姓名：</td><td>${row.bindName} <span class="copy-ic" onclick="copyText('${row.bindName}')">⧉</span></td></tr>
+    <tr><td>CPF ID：</td><td>${row.cpf} <span class="copy-ic" onclick="copyText('${row.cpf}')">⧉</span></td></tr>
+    <tr><td>银行/账号类型：</td><td>${row.bankType}</td></tr>
+    <tr><td>账户：</td><td>${row.acct} <span class="copy-ic" onclick="copyText('${row.acct}')">⧉</span></td></tr>
+    <tr><td>提现金额：</td><td>${row.amount}</td></tr>
+    <tr><td>手续费：</td><td>${row.fee}</td></tr>
+    <tr><td>实际出款：</td><td>${row.actual}</td></tr>
+  `;
+  const plClass = (v) => v >= 0 ? 'stat-win' : 'stat-loss';
+  document.getElementById('detailStatTable').innerHTML = `
+    <tr><th>今日/历史充值</th><th>今日/历史提现</th><th>今日/历史输赢</th></tr>
+    <tr>
+      <td>${s.todayDeposit}/${s.histDeposit}</td>
+      <td>${s.todayWithdraw}/${s.histWithdraw}</td>
+      <td><span class="${plClass(s.todayPL)}">${s.todayPL}</span> / <span class="${plClass(s.histPL)}">${s.histPL}</span></td>
+    </tr>
+  `;
+  const actionsEl = document.getElementById('detailProcessActions');
+  if(processMode){
+    actionsEl.innerHTML = `
+      <button class="proc-btn pb-reject" onclick="closeOverlay('detailOverlay'); openReject([${i}])">拒绝</button>
+      <button class="proc-btn pb-forfeit" onclick="closeOverlay('detailOverlay'); openForfeit([${i}])">罚没</button>
+      <button class="proc-btn pb-manual" onclick="closeOverlay('detailOverlay'); openManual([${i}])">人工完成</button>
+      <button class="proc-btn pb-pay" onclick="closeOverlay('detailOverlay'); openPay(${i})">代付</button>
+    `;
+  } else {
+    actionsEl.innerHTML = '';
+  }
+  document.getElementById('detailOverlay').classList.add('show');
+}
+
+function bulkAction(name){
+  const checked = Array.from(document.querySelectorAll('.rowchk:checked'));
+  if(checked.length === 0){ showToast('请先勾选订单'); return; }
+  const indices = checked.map(c => parseInt(c.dataset.i, 10));
+  if(name === '批量代付'){
+    const invalid = indices.filter(i => !data[i].locked || (data[i].status !== '待审核' && data[i].status !== '审核中'));
+    if(invalid.length > 0){
+      showToast('存在未锁定或状态不可代付的订单，请检查勾选项');
+      return;
+    }
+    openPayMulti(indices);
+    return;
+  }
+  if(name === '批量罚没'){
+    openForfeit(indices);
+    return;
+  }
+  if(name === '批量拒绝'){
+    openReject(indices);
+    return;
+  }
+  showToast(name + '：已对 ' + checked.length + ' 条订单发起操作');
+}
+
+/* ======================================================================
+   已审核出款订单
+   ====================================================================== */
+
+const reviewedData = [
+  {
+    id:'3535434402', level:'200雷', channel:'FB-刘-001-35755', invite:'3420592906',
+    order:'TX17835734492665137310', payOrder:'PO_260709VZbS06OQZ6RgN8Rmuy4W',
+    account:'正式', outType:'用户提现', amount:40, fee:0, actual:40,
+    bindName:'Camila', cpf:'09265521988', bankType:'CPF', acct:'0926552...',
+    payMethod:'PIX', handleMethod:'免审条件不...', payChannel:'Bestpay...', firstOut:'否',
+    status:'已完成', created:'2026-07-09 02:04:09', finished:'2026-07-09 02:04:52',
+    opNote:'免审条件不...', orderNote:'-', opInfo:'axingkefu'
+  },
+  {
+    id:'3516958435', level:'500雷', channel:'FB/278周周3-44886', invite:'-',
+    order:'TX17835734479128770721', payOrder:'PO_260709XiB8ZBZTUXO2e12usVoi',
+    account:'正式', outType:'用户提现', amount:100, fee:0, actual:100,
+    bindName:'maria d...', cpf:'04574120380', bankType:'CPF', acct:'0457412...',
+    payMethod:'PIX', handleMethod:'自动代付锁...', payChannel:'Bestpay...', firstOut:'否',
+    status:'已完成', created:'2026-07-09 02:04:07', finished:'2026-07-09 02:04:13',
+    opNote:'自动代付锁...', orderNote:'-', opInfo:'system'
+  },
+  {
+    id:'3588849436', level:'1000雷', channel:'38159', invite:'-',
+    order:'TX17835734089606660940', payOrder:'PO_260709Nx0eI9M26oaaM09t3WxT',
+    account:'正式', outType:'用户提现', amount:20, fee:0, actual:20,
+    bindName:'Caique', cpf:'49936651804', bankType:'CPF', acct:'4993665...',
+    payMethod:'PIX', handleMethod:'自动代付锁...', payChannel:'Bestpay...', firstOut:'否',
+    status:'已完成', created:'2026-07-09 02:03:28', finished:'2026-07-09 02:03:34',
+    opNote:'自动代付锁...', orderNote:'-', opInfo:'system'
+  },
+  {
+    id:'3584014583', level:'10000雷', channel:'38159', invite:'-',
+    order:'TX17835734073855920571', payOrder:'PO_260709XGnIj4UIGVGnaVBG4vhj',
+    account:'正式', outType:'用户提现', amount:80, fee:0, actual:80,
+    bindName:'Luciana...', cpf:'10497732769', bankType:'CPF', acct:'1049773...',
+    payMethod:'PIX', handleMethod:'自动代付锁...', payChannel:'Bestpay...', firstOut:'否',
+    status:'已完成', created:'2026-07-09 02:03:27', finished:'2026-07-09 02:03:33',
+    opNote:'自动代付锁...', orderNote:'-', opInfo:'system'
+  },
+  {
+    id:'3795101073', level:'50雷', channel:'FB/258-乐多', invite:'3336409331',
+    order:'TX17835733880355570527', payOrder:'PO_260709RSmT94MIKwIy46wsRJX',
+    account:'正式', outType:'用户提现', amount:20, fee:0, actual:20,
+    bindName:'Eldson', cpf:'69846391234', bankType:'CPF', acct:'6984639...',
+    payMethod:'PIX', handleMethod:'自动代付锁...', payChannel:'Bestpay...', firstOut:'否',
+    status:'已完成', created:'2026-07-09 02:03:08', finished:'2026-07-09 02:03:13',
+    opNote:'自动代付锁...', orderNote:'-', opInfo:'system'
+  }
+];
+
+function renderReviewed(){
+  const tbody = document.getElementById('rvRows');
+  tbody.innerHTML = reviewedData.map((row, i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td><span class="id-link">${row.id}</span></td>
+      <td>${row.level}</td>
+      <td>${row.channel}</td>
+      <td>${row.invite === '-' ? '-' : `<span class="id-link">${row.invite}</span>`}</td>
+      <td style="font-family:var(--mono)">${row.order}</td>
+      <td style="font-family:var(--mono)">${row.payOrder}</td>
+      <td><span class="status-pill status-normal">${row.account}</span></td>
+      <td>${row.outType}</td>
+      <td><b>${row.amount}</b></td>
+      <td>${row.fee}</td>
+      <td>${row.actual}</td>
+      <td>${row.bindName}</td>
+      <td>${row.cpf}</td>
+      <td>${row.bankType}</td>
+      <td>${row.acct}</td>
+      <td>${row.payMethod}</td>
+      <td>${row.handleMethod}</td>
+      <td>${row.payChannel}</td>
+      <td>${row.firstOut}</td>
+      <td><span class="status-pill status-done">${row.status}</span></td>
+      <td>${row.created}</td>
+      <td>${row.finished}</td>
+      <td>${row.opNote}</td>
+      <td>${row.orderNote}</td>
+      <td>${row.opInfo}</td>
+      <td><button class="act detail" onclick="showRvDetail(${i})" onmouseenter="showActTip(this,'detail','≡','明细')" onmouseleave="hideActTip()">≡</button></td>
+    </tr>
+  `).join('');
+}
+
+function showRvDetail(i){
+  const row = reviewedData[i];
+  const s = seededStats(row.id + row.order);
+  document.getElementById('rvDetailKvTable').innerHTML = `
+    <tr><td>订单号：</td><td>${row.order}</td></tr>
+    <tr><td>代付单号：</td><td>${row.payOrder}</td></tr>
+    <tr><td>会员ID：</td><td><span class="id-link">${row.id}</span></td></tr>
+    <tr><td>账号状态：</td><td>${row.account}</td></tr>
+    <tr><td>地区：</td><td>巴西</td></tr>
+    <tr><td>商户：</td><td>762</td></tr>
+    <tr><td>出款方式：</td><td>${row.payMethod}</td></tr>
+    <tr><td>出款类型：</td><td>${row.outType}</td></tr>
+    <tr><td>绑定姓名：</td><td>${row.bindName} <span class="copy-ic" onclick="copyText('${row.bindName}')">⧉</span></td></tr>
+    <tr><td>CPF ID：</td><td>${row.cpf} <span class="copy-ic" onclick="copyText('${row.cpf}')">⧉</span></td></tr>
+    <tr><td>银行/账号类型：</td><td>${row.bankType}</td></tr>
+    <tr><td>账户：</td><td>${row.acct} <span class="copy-ic" onclick="copyText('${row.acct}')">⧉</span></td></tr>
+    <tr><td>提现金额：</td><td>${row.amount}</td></tr>
+    <tr><td>手续费：</td><td>${row.fee}</td></tr>
+    <tr><td>实际出款：</td><td>${row.actual}</td></tr>
+    <tr><td>处理方式：</td><td>${row.handleMethod}</td></tr>
+    <tr><td>创建时间：</td><td>${row.created}</td></tr>
+    <tr><td>完成时间：</td><td>${row.finished}</td></tr>
+  `;
+  const plClass = (v) => v >= 0 ? 'stat-win' : 'stat-loss';
+  document.getElementById('rvDetailStatTable').innerHTML = `
+    <tr><th>今日/历史充值</th><th>今日/历史提现</th><th>今日/历史输赢</th></tr>
+    <tr>
+      <td>${s.todayDeposit}/${s.histDeposit}</td>
+      <td>${s.todayWithdraw}/${s.histWithdraw}</td>
+      <td><span class="${plClass(s.todayPL)}">${s.todayPL}</span> / <span class="${plClass(s.histPL)}">${s.histPL}</span></td>
+    </tr>
+  `;
+  document.getElementById('rvDetailOverlay').classList.add('show');
+}
+
+function setRange(label){
+  showToast('已切换时间范围：' + label);
+}
+
+/* ======================================================================
+   总出款记录
+   ====================================================================== */
+
+const totalData = [
+  {
+    id:'3309277461', account_no:'21999043284', invite:'3242958955', operator:'system',
+    order:'TX17828747856479116131', payOrder:'PO_260630cGgxNXDhfELgC0XPuqbG',
+    account:'正式', outType:'用户提现', amount:50, fee:0, actual:50,
+    bindName:'Vitoria', cpf:'22668083783', bankType:'PHONE', payMethod:'PIX',
+    handleMethod:'PIX代付', payChannel:'Bestpay代付', firstOut:'否', status:'已完成',
+    acct:'21989983838', created:'2026-06-30 23:59:43', finished:'2026-06-30 23:59:52', orderNote:'自动代付'
+  },
+  {
+    id:'3438012520', account_no:'55996476463', invite:'-', operator:'axingkefu',
+    order:'TX17828747300859704359', payOrder:'PO_26063035twesIDGOMrpDbmxYCq',
+    account:'正式', outType:'用户提现', amount:400, fee:0, actual:400,
+    bindName:'Juliano', cpf:'02558073095', bankType:'CPF', payMethod:'PIX',
+    handleMethod:'PIX代付', payChannel:'Bestpay代付', firstOut:'否', status:'已完成',
+    acct:'02558073095', created:'2026-06-30 23:58:50', finished:'2026-06-30 23:59:28', orderNote:'自动代付'
+  },
+  {
+    id:'3718431411', account_no:'93991342061', invite:'-', operator:'system',
+    order:'TX17828747101114769507', payOrder:'PO_260630fHyEqSwzGan0TfVBeX3O',
+    account:'正式', outType:'用户提现', amount:73, fee:0, actual:73,
+    bindName:'sandrovale de J', cpf:'00694284254', bankType:'CPF', payMethod:'PIX',
+    handleMethod:'PIX代付', payChannel:'Bestpay代付', firstOut:'否', status:'已完成',
+    acct:'00694284254', created:'2026-06-30 23:58:30', finished:'2026-06-30 23:58:36', orderNote:'自动代付'
+  },
+  {
+    id:'3883306961', account_no:'66992821045', invite:'-', operator:'system',
+    order:'TX17828745303106583270', payOrder:'PO_26060088oieTBdXxLu53iqPJAh',
+    account:'正式', outType:'用户提现', amount:26, fee:0, actual:26,
+    bindName:'matheus', cpf:'06241162128', bankType:'CPF', payMethod:'PIX',
+    handleMethod:'PIX代付', payChannel:'Bestpay代付', firstOut:'否', status:'已完成',
+    acct:'06241162128', created:'2026-06-30 23:55:30', finished:'2026-06-30 23:55:36', orderNote:'自动代付'
+  },
+  {
+    id:'3348484652', account_no:'11971246997', invite:'3605442618', operator:'axingkefu',
+    order:'TX17828745210383828041', payOrder:'PO_260630FQFQBsggbcnsn14CwYWF',
+    account:'正式', outType:'用户提现', amount:200, fee:0, actual:200,
+    bindName:'carlos Alberto', cpf:'49798346807', bankType:'CPF', payMethod:'PIX',
+    handleMethod:'PIX代付', payChannel:'Bestpay代付', firstOut:'是', status:'已完成',
+    acct:'49798346807', created:'2026-06-30 23:55:21', finished:'2026-06-30 23:56:25', orderNote:'免审条件'
+  },
+  {
+    id:'3982120268', account_no:'22996069857', invite:'-', operator:'system',
+    order:'TX17828744751339927988', payOrder:'PO_260630AezTgX3Us7K7avqnjvLe',
+    account:'正式', outType:'用户提现', amount:40, fee:0, actual:40,
+    bindName:'ELINELE', cpf:'08907373710', bankType:'CPF', payMethod:'PIX',
+    handleMethod:'PIX代付', payChannel:'Bestpay代付', firstOut:'否', status:'已完成',
+    acct:'08907373710', created:'2026-06-30 23:54:35', finished:'2026-06-30 23:54:41', orderNote:'自动代付'
+  },
+  {
+    id:'3503879751', account_no:'19989867245', invite:'3283961173', operator:'system',
+    order:'TX17828744225859738664', payOrder:'PO_26060xnwxipzZPiHINsiUmHOc',
+    account:'正式', outType:'用户提现', amount:50, fee:0, actual:50,
+    bindName:'Andreza', cpf:'26245772893', bankType:'CPF', payMethod:'PIX',
+    handleMethod:'PIX代付', payChannel:'Bestpay代付', firstOut:'否', status:'已完成',
+    acct:'26245772893', created:'2026-06-30 23:53:42', finished:'2026-06-30 23:53:48', orderNote:'自动代付'
+  },
+  {
+    id:'3703838332', account_no:'82993565030', invite:'3106573329', operator:'axingkefu',
+    order:'TX17828743037764276518', payOrder:'PO_2606308RqCrVvJ8f0Dv6li9EfG',
+    account:'正式', outType:'用户提现', amount:20, fee:0, actual:20,
+    bindName:'Carlos Eduardo', cpf:'14113715424', bankType:'CPF', payMethod:'PIX',
+    handleMethod:'PIX代付', payChannel:'Bestpay代付', firstOut:'是', status:'已完成',
+    acct:'14113715424', created:'2026-06-30 23:51:43', finished:'2026-06-30 23:52:24', orderNote:'免审条件'
+  }
+];
+
+function renderTotal(){
+  const tbody = document.getElementById('totalRows');
+  tbody.innerHTML = totalData.map((row, i) => `
+    <tr>
+      <td><span class="id-link">${row.id}</span></td>
+      <td>${row.account_no}</td>
+      <td>${row.invite === '-' ? '-' : `<span class="id-link">${row.invite}</span>`}</td>
+      <td>${row.operator}</td>
+      <td style="font-family:var(--mono)">${row.order}</td>
+      <td style="font-family:var(--mono)">${row.payOrder}</td>
+      <td><span class="status-pill status-normal">${row.account}</span></td>
+      <td>${row.outType}</td>
+      <td><b>${row.amount}</b></td>
+      <td>${row.fee}</td>
+      <td>${row.actual}</td>
+      <td>${row.bindName}</td>
+      <td>${row.cpf}</td>
+      <td>${row.bankType}</td>
+      <td>${row.payMethod}</td>
+      <td>${row.handleMethod}</td>
+      <td>${row.payChannel}</td>
+      <td>${row.firstOut}</td>
+      <td><span class="status-pill status-done">${row.status}</span></td>
+      <td>${row.acct}</td>
+      <td>${row.created}</td>
+      <td>${row.finished}</td>
+      <td>${row.orderNote}</td>
+      <td><button class="act detail" onclick="showTotalDetail(${i})" onmouseenter="showActTip(this,'detail','≡','明细')" onmouseleave="hideActTip()">≡</button></td>
+    </tr>
+  `).join('');
+}
+
+function showTotalDetail(i){
+  const row = totalData[i];
+  const s = seededStats(row.id + row.order);
+  document.getElementById('totalDetailKvTable').innerHTML = `
+    <tr><td>订单号：</td><td>${row.order}</td></tr>
+    <tr><td>代付单号：</td><td>${row.payOrder}</td></tr>
+    <tr><td>会员ID：</td><td><span class="id-link">${row.id}</span></td></tr>
+    <tr><td>会员账号：</td><td>${row.account_no}</td></tr>
+    <tr><td>账号状态：</td><td>${row.account}</td></tr>
+    <tr><td>地区：</td><td>巴西</td></tr>
+    <tr><td>商户：</td><td>762</td></tr>
+    <tr><td>出款方式：</td><td>${row.payMethod}</td></tr>
+    <tr><td>出款类型：</td><td>${row.outType}</td></tr>
+    <tr><td>绑定姓名：</td><td>${row.bindName} <span class="copy-ic" onclick="copyText('${row.bindName}')">⧉</span></td></tr>
+    <tr><td>CPF ID：</td><td>${row.cpf} <span class="copy-ic" onclick="copyText('${row.cpf}')">⧉</span></td></tr>
+    <tr><td>银行/账号类型：</td><td>${row.bankType}</td></tr>
+    <tr><td>账户：</td><td>${row.acct} <span class="copy-ic" onclick="copyText('${row.acct}')">⧉</span></td></tr>
+    <tr><td>提现金额：</td><td>${row.amount}</td></tr>
+    <tr><td>手续费：</td><td>${row.fee}</td></tr>
+    <tr><td>实际出款：</td><td>${row.actual}</td></tr>
+    <tr><td>处理方式：</td><td>${row.handleMethod}</td></tr>
+    <tr><td>创建时间：</td><td>${row.created}</td></tr>
+    <tr><td>完成时间：</td><td>${row.finished}</td></tr>
+    <tr><td>订单备注：</td><td>${row.orderNote}</td></tr>
+  `;
+  const plClass = (v) => v >= 0 ? 'stat-win' : 'stat-loss';
+  document.getElementById('totalDetailStatTable').innerHTML = `
+    <tr><th>今日/历史充值</th><th>今日/历史提现</th><th>今日/历史输赢</th></tr>
+    <tr>
+      <td>${s.todayDeposit}/${s.histDeposit}</td>
+      <td>${s.todayWithdraw}/${s.histWithdraw}</td>
+      <td><span class="${plClass(s.todayPL)}">${s.todayPL}</span> / <span class="${plClass(s.histPL)}">${s.histPL}</span></td>
+    </tr>
+  `;
+  document.getElementById('totalDetailOverlay').classList.add('show');
+}
+
+/* ======================================================================
+   提现管理 / 自动代付配置
+   ====================================================================== */
+
+const channelConfig = [
+  { name:'Bestpay代付', enabled:true,  rule:'none' },
+  { name:'Waterpay代付', enabled:true,  rule:'balance', threshold:100 },
+  { name:'CBPAY代付', enabled:false, rule:'fail', threshold:5 },
+  { name:'DonePay代付', enabled:true,  rule:'none' },
+  { name:'YunPay代付', enabled:false, rule:'none' },
+];
+
+function renderChannelCfg(){
+  const tbody = document.getElementById('channelCfgBody');
+  tbody.innerHTML = channelConfig.map((c, i) => `
+    <tr>
+      <td>${c.name}</td>
+      <td>
+        <div class="switch ${c.enabled ? 'on' : ''}" id="ch-sw-${i}" onclick="toggleChannel(${i})"><div class="knob"></div></div>
+      </td>
+      <td>
+        <div class="threshold-cell">
+          <select id="ch-rule-${i}" onchange="onRuleChange(${i})">
+            <option value="none" ${c.rule==='none'?'selected':''}>不自动下架</option>
+            <option value="balance" ${c.rule==='balance'?'selected':''}>余额低于阈值时自动下架</option>
+            <option value="fail" ${c.rule==='fail'?'selected':''}>连续失败超过次数时自动下架</option>
+          </select>
+          <input type="number" class="threshold-input" id="ch-threshold-${i}"
+                 value="${c.threshold || ''}"
+                 placeholder="${c.rule==='balance' ? '余额' : (c.rule==='fail' ? '次数' : '')}"
+                 style="${c.rule==='none' ? 'display:none;' : ''}">
+          ${c.rule==='none' ? '<span class="recommended-tag">推荐</span>' : ''}
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function toggleChannel(i){
+  channelConfig[i].enabled = !channelConfig[i].enabled;
+  document.getElementById('ch-sw-' + i).classList.toggle('on', channelConfig[i].enabled);
+}
+
+function onRuleChange(i){
+  const val = document.getElementById('ch-rule-' + i).value;
+  channelConfig[i].rule = val;
+  renderChannelCfg();
+}
+
+function toggleSwitch(id, cb){
+  const el = document.getElementById(id);
+  const isOn = el.classList.toggle('on');
+  if(cb) cb(isOn);
+}
+
+function onAutoPayToggle(isOn){
+  document.getElementById('amt-min').disabled = !isOn;
+  document.getElementById('amt-max').disabled = !isOn;
+  ['block-amount', 'block-firstout', 'block-autoreject', 'block-channels'].forEach(id => {
+    document.getElementById(id).style.display = isOn ? 'block' : 'none';
+  });
+  showToast(isOn ? '自动代付已开启' : '自动代付已关闭，订单将转为人工处理');
+}
+
+const tierOptions = [
+  { id:'5247973256073617409', name:'默认层级' },
+  { id:'5261424960141238272', name:'长期活动dddddddddddddddd' },
+  { id:'5298253359859343360', name:'白银会员' },
+  { id:'5298253806535942144', name:'黄金会员' },
+  { id:'5298255009126785024', name:'铂金会员' },
+  { id:'5300981523086114816', name:'钻石会员' },
+  { id:'5257912020480499712', name:'啦啦啦啦' },
+];
+let selectedTierIds = new Set(['5300981523086114816', '5298255009126785024']);
+let tempTierIds = new Set();
+
+function renderTierChips(){
+  const wrap = document.getElementById('tierChipWrap');
+  const selected = tierOptions.filter(t => selectedTierIds.has(t.id));
+  if(selected.length === 0){
+    wrap.innerHTML = `<span class="tier-tag empty">未选择任何层级</span>`;
+    return;
+  }
+  wrap.innerHTML = selected.map(t => `<span class="tier-tag">${t.name}</span>`).join('');
+}
+
+function openTierSelect(){
+  tempTierIds = new Set(selectedTierIds);
+  renderTierCheckList();
+  document.getElementById('tierSelectOverlay').classList.add('show');
+}
+function renderTierCheckList(){
+  const list = document.getElementById('tierCheckList');
+  list.innerHTML = tierOptions.map(t => `
+    <label class="tier-check-item">
+      <input type="checkbox" ${tempTierIds.has(t.id) ? 'checked' : ''} onchange="toggleTempTier('${t.id}', this.checked)">
+      ${t.name}
+    </label>
+  `).join('');
+}
+function toggleTempTier(id, checked){
+  if(checked) tempTierIds.add(id);
+  else tempTierIds.delete(id);
+}
+function confirmTierSelect(){
+  selectedTierIds = new Set(tempTierIds);
+  renderTierChips();
+  closeOverlay('tierSelectOverlay');
+  showToast('已更新强制人工审核的会员层级');
+}
+
+function onRiskControlToggle(isOn){
+  document.getElementById('block-tier-select').style.display = isOn ? 'block' : 'none';
+  showToast(isOn ? '免审风控已开启' : '免审风控已关闭，会员层级不再作为免审判定条件');
+}
+
+function onFirstOutToggle(isOn){
+  showToast(isOn ? '已开启：首次出款订单将强制转人工审核' : '已关闭：首次出款订单按金额范围规则自动处理');
+}
+
+function saveConfig(){
+  showToast('配置已保存');
+}
+function resetConfig(){
+  showToast('已重置为上次保存的配置');
+}
+
+/* ======================================================================
+   代付商户管理
+   ====================================================================== */
+
+const merchantData = [
+  { sort:1, channelNo:'', channelName:'bix', platform:'bestpay代付', note:'', currency:'BRL', unit:'元-整数', time:'2026-05-18 03:46:18 (UTC-3)', operator:'bxaq01', enabled:true },
+  { sort:1, channelNo:'2744860477', channelName:'bestpay代付', platform:'bestpay代付', note:'', currency:'BRL', unit:'元-整数', time:'2026-05-05 07:03:14 (UTC-3)', operator:'bxdk01', enabled:true },
+  { sort:66, channelNo:'33', channelName:'ydpay - 代付', platform:'YDpay 代付', note:'', currency:'VND', unit:'元-整数', time:'2026-05-18 03:46:20 (UTC-3)', operator:'bxaq01', enabled:true },
+  { sort:2, channelNo:'', channelName:'ydpay-usdt', platform:'YDpay 代付', note:'USDT提现', currency:'VND', unit:'元-整数', time:'2025-11-12 06:44:19 (UTC-3)', operator:'SiteFrank01', enabled:true },
+  { sort:3, channelNo:'365', channelName:'测试', platform:'创辉代付', note:'', currency:'CNY', unit:'元-整数', time:'2026-03-30 07:32:38 (UTC-3)', operator:'SiteFrank01', enabled:false },
+];
+
+function renderMerchant(){
+  const tbody = document.getElementById('merchantRows');
+  tbody.innerHTML = merchantData.map((row, i) => `
+    <tr>
+      <td>${row.sort}</td>
+      <td>${row.channelNo ? `<span class="id-link">${row.channelNo}</span> / ` : ''}<span class="id-link">${row.channelName}</span> / ${row.platform}</td>
+      <td>${row.note || ''}</td>
+      <td>${row.currency}</td>
+      <td>${row.unit}</td>
+      <td><span class="status-tag ${row.enabled ? 'on' : 'off'}">${row.enabled ? '启用' : '禁用'}</span></td>
+      <td>${row.time}</td>
+      <td>${row.operator}</td>
+      <td>
+        <button class="chip-btn gray" onclick="merchantDetail(${i})">详情</button>
+        <button class="chip-btn ${row.enabled ? 'red' : 'green'}" onclick="toggleMerchantEnabled(${i})">${row.enabled ? '禁用' : '启用'}</button>
+        <button class="chip-btn blue" onclick="openMerchantForm(${i})">编辑</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function merchantDetail(i){
+  const row = merchantData[i];
+  showToast(`渠道详情：${row.channelName} · ${row.platform} · 排序 ${row.sort}`);
+}
+
+function toggleMerchantEnabled(i){
+  merchantData[i].enabled = !merchantData[i].enabled;
+  renderMerchant();
+  showToast(merchantData[i].enabled ? '渠道已启用' : '渠道已禁用');
+}
+
+let editingMerchantIndex = null;
+function openMerchantForm(i){
+  editingMerchantIndex = (typeof i === 'number') ? i : null;
+  const isEdit = editingMerchantIndex !== null;
+  document.getElementById('merchantFormTitle').textContent = isEdit ? '编辑' : '添加';
+  const row = isEdit ? merchantData[editingMerchantIndex] : null;
+  document.getElementById('mf-platform').value = row ? row.platform : '';
+  document.getElementById('mf-channelno').value = row ? (row.channelNo || '') : '';
+  document.getElementById('mf-channelname').value = row ? row.channelName : '';
+  document.getElementById('mf-method').value = '';
+  document.getElementById('mf-sort').value = row ? row.sort : '';
+  document.getElementById('mf-note').value = row ? (row.note || '') : '';
+  document.getElementById('merchantFormOverlay').classList.add('show');
+}
+
+function confirmMerchantForm(){
+  const platform = document.getElementById('mf-platform').value;
+  const channelName = document.getElementById('mf-channelname').value.trim();
+  const method = document.getElementById('mf-method').value;
+  const sort = document.getElementById('mf-sort').value;
+  if(!platform || !channelName || !method || !sort){
+    showToast('请填写所有必填项（代付平台 / 代付渠道 / 代付方式 / 排序）');
+    return;
+  }
+  const channelNo = document.getElementById('mf-channelno').value.trim();
+  const note = document.getElementById('mf-note').value.trim();
+  if(editingMerchantIndex !== null){
+    const row = merchantData[editingMerchantIndex];
+    row.platform = platform; row.channelNo = channelNo; row.channelName = channelName; row.sort = Number(sort); row.note = note;
+    showToast('渠道信息已更新');
+  } else {
+    merchantData.unshift({
+      sort:Number(sort), channelNo, channelName, platform, note, currency:'BRL', unit:'元-整数',
+      time: new Date().toISOString().slice(0,19).replace('T',' ') + ' (UTC-3)',
+      operator:'axingkefu', enabled:true
+    });
+    showToast('渠道已添加');
+  }
+  renderMerchant();
+  closeOverlay('merchantFormOverlay');
+}
+
+/* ======================================================================
+   初始化
+   ====================================================================== */
+render();
+renderReviewed();
+renderTotal();
+renderChannelCfg();
+renderMerchant();
+renderTierChips();
+switchTab('reviewed');
+</script>
+
+</body>
+</html>

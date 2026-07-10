@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>商户财务后台 · 出款与代付模块 · PRD</title>
+<style>
+  :root{
+    --text:#1f2329; --dim:#6b7280; --border:#e5e7eb; --bg:#f7f8fa;
+    --primary:#2f6ef2; --ok:#2e9e5b; --warn:#d9832f; --danger:#e0542a;
+    --mono:'SFMono-Regular', Consolas, 'Courier New', monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.7; font-size:14.5px;
+  }
+  .doc{max-width:960px; margin:0 auto; padding:48px 56px 100px; background:#fff; box-shadow:0 0 0 1px var(--border);}
+
+  .cover{border-bottom:3px solid var(--primary); padding-bottom:28px; margin-bottom:36px;}
+  .cover .kicker{color:var(--primary); font-weight:600; font-size:13px; letter-spacing:1px; text-transform:uppercase;}
+  .cover h1{font-size:28px; margin:10px 0 8px;}
+  .cover .sub{color:var(--dim); font-size:14px;}
+  .meta-table{width:100%; border-collapse:collapse; margin-top:20px; font-size:13px;}
+  .meta-table td{padding:6px 10px; border:1px solid var(--border);}
+  .meta-table td:first-child{color:var(--dim); width:120px; background:#fafbfc;}
+
+  h2{
+    font-size:20px; margin:44px 0 16px; padding-bottom:8px; border-bottom:2px solid var(--text);
+    scroll-margin-top:20px;
+  }
+  h3{
+    font-size:16px; margin:30px 0 12px; color:var(--primary); scroll-margin-top:20px;
+  }
+  h4{font-size:14.5px; margin:20px 0 8px; scroll-margin-top:20px;}
+  p{margin:8px 0;}
+  ul, ol{margin:8px 0; padding-left:22px;}
+  li{margin:4px 0;}
+
+  table.spec{width:100%; border-collapse:collapse; margin:14px 0 22px; font-size:13px;}
+  table.spec th, table.spec td{border:1px solid var(--border); padding:8px 10px; text-align:left; vertical-align:top;}
+  table.spec th{background:#f5f6f8; color:var(--dim); font-weight:600; white-space:nowrap;}
+  table.spec td.mono{font-family:var(--mono); font-size:12.5px;}
+  table.spec tr:nth-child(even) td{background:#fbfbfc;}
+
+  .pill{display:inline-block; padding:2px 9px; border-radius:10px; font-size:11.5px; font-weight:600; white-space:nowrap;}
+  .pill.gray{color:#6b7280; background:#eef0f3;}
+  .pill.blue{color:var(--primary); background:#eaf1ff;}
+  .pill.orange{color:var(--warn); background:#fdf1e3;}
+  .pill.green{color:var(--ok); background:#e6f6ec;}
+  .pill.red{color:var(--danger); background:#fdece7;}
+
+  .callout{
+    border-left:4px solid var(--primary); background:#f2f6ff; padding:12px 16px; margin:14px 0; font-size:13.5px; border-radius:0 4px 4px 0;
+  }
+  .callout.warn{border-left-color:var(--warn); background:#fdf6ec;}
+  .callout.danger{border-left-color:var(--danger); background:#fdf1ee;}
+
+  .toc{
+    background:#fafbfc; border:1px solid var(--border); border-radius:6px; padding:20px 24px; margin:20px 0 10px;
+  }
+  .toc h2{border:none; margin:0 0 12px; font-size:16px;}
+  .toc ol{margin:0; padding-left:20px; columns:2; column-gap:40px;}
+  .toc li{margin:5px 0; break-inside:avoid;}
+  .toc a{color:var(--text); text-decoration:none; font-size:13.5px;}
+  .toc a:hover{color:var(--primary); text-decoration:underline;}
+
+  .module-tag{
+    display:inline-block; font-size:11px; font-weight:700; color:#fff; background:var(--primary);
+    padding:2px 8px; border-radius:3px; margin-right:8px; vertical-align:middle;
+  }
+  .flow-steps{counter-reset:step; margin:14px 0;}
+  .flow-steps li{
+    list-style:none; position:relative; padding-left:32px; margin-bottom:10px; font-size:13.5px;
+  }
+  .flow-steps li::before{
+    counter-increment:step; content:counter(step); position:absolute; left:0; top:0;
+    width:22px; height:22px; border-radius:50%; background:var(--primary); color:#fff;
+    font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center;
+  }
+  .icon-chip{
+    display:inline-flex; align-items:center; gap:6px; padding:2px 8px; border-radius:4px; background:#f5f6f8;
+    font-size:12.5px; font-family:var(--mono);
+  }
+  code{background:#f2f4f7; padding:1px 6px; border-radius:3px; font-size:12.5px; font-family:var(--mono);}
+  .footer-note{margin-top:60px; padding-top:16px; border-top:1px solid var(--border); color:var(--dim); font-size:12px;}
+  @media print{
+    body{background:#fff;}
+    .doc{box-shadow:none; padding:0;}
+  }
+</style>
+</head>
+<body>
+<div class="doc">
+
+  <!-- ============ 封面 / 文档信息 ============ -->
+  <div class="cover">
+    <div class="kicker">Product Requirements Document</div>
+    <h1>商户财务后台 · 出款与代付模块</h1>
+    <div class="sub">待审核出款订单 / 已审核出款订单 / 总出款记录 / 提现管理（自动代付配置） / 代付商户管理</div>
+    <table class="meta-table">
+      <tr><td>文档版本</td><td>V1.2</td></tr>
+      <tr><td>更新日期</td><td>2026-07-10</td></tr>
+      <tr><td>所属系统</td><td>商户财务管理 / 商户财务配置</td></tr>
+      <tr><td>涉及角色</td><td>财务审核员、风控/客服（axingkefu 类账号）、系统管理员、系统自动任务（system）</td></tr>
+      <tr><td>状态</td><td><span class="pill blue">评审中</span></td></tr>
+    </table>
+  </div>
+
+  <!-- ============ 目录 ============ -->
+  <div class="toc">
+    <h2>目录</h2>
+    <ol>
+      <li><a href="#bg">1. 背景与目标</a></li>
+      <li><a href="#scope">2. 名词与范围</a></li>
+      <li><a href="#nav">3. 全局导航结构</a></li>
+      <li><a href="#m1">4. 待审核出款订单</a></li>
+      <li><a href="#m2">5. 已审核出款订单</a></li>
+      <li><a href="#m3">6. 总出款记录</a></li>
+      <li><a href="#m4">7. 提现管理（自动代付配置）</a></li>
+      <li><a href="#m5">8. 代付商户管理</a></li>
+      <li><a href="#global">9. 全局交互规范</a></li>
+      <li><a href="#dict">10. 数据字典 / 状态枚举</a></li>
+      <li><a href="#nfr">11. 非功能性需求</a></li>
+      <li><a href="#open">12. 已确认决策记录</a></li>
+    </ol>
+  </div>
+
+  <!-- ============ 1. 背景与目标 ============ -->
+  <h2 id="bg">1. 背景与目标</h2>
+  <p>
+    商户在提现（出款）业务中涉及多个环节：会员发起提现 → 系统/人工审核 → 代付渠道出款 → 出款结果回写。
+    为提升处理效率、降低人工审核成本、控制资损风险，本次需求围绕"出款审核 + 自动代付"链路，
+    对以下 5 个后台页面进行统一设计：
+  </p>
+  <ul>
+    <li><b>待审核出款订单</b>：审核员处理会员提现申请的主战场，支持锁定、拒绝、罚没、人工完成、代付等操作；</li>
+    <li><b>已审核出款订单</b>：已完结订单的查询与追溯；</li>
+    <li><b>总出款记录</b>：全量出款流水查询，供财务对账使用；</li>
+    <li><b>提现管理（自动代付配置）</b>：配置自动代付的开关、金额范围、失败驳回策略、渠道上下架规则；</li>
+    <li><b>代付商户管理</b>：维护接入的第三方代付渠道基础信息。</li>
+  </ul>
+  <div class="callout">
+    目标：在保证资金安全（锁定机制、余额校验、备注留痕）的前提下，让符合条件的小额订单可以<b>无需人工干预</b>自动完成代付，
+    人工审核员只需处理异常订单，从而降低整体处理时长与人力成本。
+  </div>
+
+  <!-- ============ 2. 名词与范围 ============ -->
+  <h2 id="scope">2. 名词与范围</h2>
+  <table class="spec">
+    <tr><th>名词</th><th>说明</th></tr>
+    <tr><td>代付</td><td>后台向第三方支付渠道发起打款请求，将款项转给会员账户的过程</td></tr>
+    <tr><td>自动代付</td><td>系统在无人工干预的情况下，依据配置的规则自动完成审核与代付</td></tr>
+    <tr><td>锁定</td><td>将某笔订单标记为"仅锁定人 / 最高权限账号可操作"，避免多人并发处理同一笔订单</td></tr>
+    <tr><td>罚没</td><td>没收该笔提现金额，不退回会员余额，也不计入平台出款报表</td></tr>
+    <tr><td>免审条件</td><td>系统预设的、订单无需人工审核即可直接进入代付流程的判定条件（如金额、账号风控等级等）</td></tr>
+    <tr><td>渠道下架</td><td>某代付渠道因余额不足或失败率过高等原因被系统自动从"可用渠道池"中移除</td></tr>
+  </table>
+  <p>范围内不包含：会员端提现申请页面、风控规则引擎本身的策略配置、三方渠道对接的技术接口文档（另见接口设计文档）。</p>
+
+  <!-- ============ 3. 全局导航结构 ============ -->
+  <h2 id="nav">3. 全局导航结构</h2>
+  <p>五个页面统一挂载在左侧多级菜单下，顶部以"标签页"形式呈现当前已打开的页面，面包屑随当前激活标签动态变化：</p>
+  <table class="spec">
+    <tr><th>菜单分组</th><th>子菜单</th><th>说明</th></tr>
+    <tr><td rowspan="3">商户财务管理</td><td>待审核出款订单</td><td>核心审核工作台</td></tr>
+    <tr><td>已审核出款订单</td><td>历史结果查询</td></tr>
+    <tr><td>总出款记录</td><td>全量流水查询（供对账）</td></tr>
+    <tr><td rowspan="2">商户财务配置</td><td>提现管理</td><td>提现条件 / 自动代付规则配置</td></tr>
+    <tr><td>代付商户管理</td><td>三方代付渠道基础资料维护</td></tr>
+  </table>
+  <p>其余菜单项（会员人工加减额、充值相关配置等）不在本期范围内，页面中以"敬请期待"占位提示呈现。</p>
+
+  <!-- ============ 4. 待审核出款订单 ============ -->
+  <h2 id="m1"><span class="module-tag">模块一</span>待审核出款订单</h2>
+  <p>页面路径：<code>商户财务管理 / 待审核出款订单</code>。核心诉求：让审核员快速筛选、锁定、处理提现订单，同时支撑系统自动代付流程的可视化跟踪。</p>
+
+  <h3>4.1 筛选条件</h3>
+  <table class="spec">
+    <tr><th>字段</th><th>控件类型</th><th>说明</th></tr>
+    <tr><td>地区 / 商户 / 渠道 / 层级</td><td>下拉单选</td><td>基础维度筛选</td></tr>
+    <tr><td>会员ID / 会员账号</td><td>组合下拉 + 输入框</td><td>左侧下拉切换查询维度（会员ID 或 会员账号），右侧输入具体值</td></tr>
+    <tr><td>订单号 / 外部订单号</td><td>输入框</td><td>精确查询</td></tr>
+    <tr><td>订单状态</td><td>下拉单选</td><td>全部 / 待审核 / 审核中 / 代付中 / 代付成功 / 代付失败 / 代付异常</td></tr>
+    <tr><td>出款类型</td><td>下拉单选</td><td>全部 / 用户提现 / 佣金提现</td></tr>
+    <tr><td>代付平台</td><td>下拉单选</td><td>全部 / cbpay代付 / Hambit代付 / toppaynew代付 / transafepay / 模拟代付(测试用) / winpay / GLOBALPAYNEW代付</td></tr>
+    <tr><td>代付渠道</td><td>下拉单选</td><td>全部 / Bestpay代付 / qqpay代付 / Waterpay代付 / FPAY代付 / bcpay代付 / CBPAY代付 / DonePay代付 / YunPay代付</td></tr>
+    <tr><td>出款方式</td><td>下拉单选</td><td>全部 / PIX</td></tr>
+    <tr><td>账号类型 / 审核类型 / 审核原因</td><td>下拉单选</td><td>审核类型：全部 / 免审不通过 / 自动代付条件不符</td></tr>
+    <tr><td>提款金额</td><td>区间输入</td><td>最小金额 ~ 最大金额</td></tr>
+    <tr><td>创建时间</td><td>区间选择</td><td>默认当天 00:00:00 ~ 23:59:59</td></tr>
+    <tr><td>查看全部 / 查看自动代付锁定订单</td><td>勾选框</td><td>控制列表展示范围</td></tr>
+  </table>
+
+  <h3>4.2 列表字段</h3>
+  <table class="spec">
+    <tr><th>字段</th><th>说明</th></tr>
+    <tr><td>会员ID / 渠道 / 会员层级 / 操作人</td><td>基础信息；操作人为该订单最近一次人工操作的账号</td></tr>
+    <tr><td>订单号 / 代付单号</td><td>代付单号在发起代付后才会生成</td></tr>
+    <tr><td>账号状态</td><td>会员账号状态，如"正式"</td></tr>
+    <tr><td>出款类型 / 提款金额 / 手续费 / 实际出款</td><td>实际出款 = 提款金额 − 手续费</td></tr>
+    <tr><td>创建时间 / 绑定姓名 / 银行账号类型 / 账户 / 出款方式 / 代付渠道</td><td>基础与银行信息</td></tr>
+    <tr><td>是否首次出款</td><td>是 / 否，首次出款订单通常需要更严格的人工复核</td></tr>
+    <tr><td>订单状态</td><td>见 §10 状态枚举</td></tr>
+    <tr><td>审核类型</td><td>标注该订单为何进入人工队列，例如"自动代付条件不符"</td></tr>
+    <tr><td>操作备注 / 邀请ID / CPF ID</td><td>操作备注展示最近一次人工处理时填写的备注</td></tr>
+  </table>
+
+  <h3>4.3 操作按钮与业务规则</h3>
+  <table class="spec">
+    <tr><th>按钮</th><th>触发条件</th><th>业务规则</th></tr>
+    <tr><td><span class="pill gray">明细</span></td><td>任意订单</td><td>只读查看：订单信息 + 该会员今日/历史充值、提现、输赢统计</td></tr>
+    <tr><td><span class="pill blue">锁定</span></td><td>未锁定订单</td><td>需二次确认弹窗；锁定后仅锁定人与最高权限账号可继续操作该订单</td></tr>
+    <tr><td><span class="pill blue">解锁</span></td><td>已锁定订单</td><td>解锁后恢复所有具后台权限的账号均可操作</td></tr>
+    <tr><td><span class="pill orange">处理</span></td><td>已锁定且状态为"待审核/审核中"</td><td>打开订单明细弹窗，底部追加"拒绝 / 罚没 / 人工完成 / 代付"四个操作入口，一次性完成审核决策</td></tr>
+    <tr><td><span class="pill blue">拒绝</span></td><td>已锁定且状态为"待审核/审核中"</td><td>需填写「操作备注」（将邮件通知会员并展示在提款详情页）与「订单备注」（仅后台可见）；确认后提现金额退回会员余额，订单移出本列表</td></tr>
+    <tr><td><span class="pill red">罚没</span></td><td>同上</td><td>备注规则同"拒绝"；确认后金额直接扣除，<b>不退回会员余额，不计入出款报表</b>，订单移出本列表</td></tr>
+    <tr><td>人工完成</td><td>处理弹窗内触发</td><td>备注规则同上；用于审核员确认线下/人工方式已完成出款的场景，确认后订单移出本列表</td></tr>
+    <tr><td><span class="pill blue">代付</span></td><td>已锁定且状态为"待审核/审核中"</td><td>见 §4.4</td></tr>
+    <tr><td>更新订单状态</td><td>状态为"代付中/代付成功/代付失败/代付异常"</td><td>拉取最新的代付渠道回执，刷新订单状态</td></tr>
+  </table>
+  <div class="callout warn">
+    所有需要资金处置的操作（拒绝 / 罚没 / 人工完成）在提交前都<b>强制要求</b>弹出备注确认框，避免误操作；
+    "操作备注"和"订单备注"的可见范围不同，产品/研发需在后端分别落库，不能混用同一字段。
+  </div>
+
+  <h3>4.4 代付流程</h3>
+  <ol class="flow-steps">
+    <li>点击「代付」（支持单笔或勾选多笔「批量代付」），弹出代付弹窗，展示所有选中订单的订单信息表格；</li>
+    <li>下方展示可选代付渠道列表，每个渠道显示当前余额；余额为 0 的渠道置灰不可选，可点击「刷新」重新拉取余额；</li>
+    <li>系统实时计算所选订单的实付总额，与当前选中渠道余额比较：若余额不足，「出款」按钮置灰禁用，并在按钮上方提示"代付渠道余额不足（需要 X，渠道名 余额 Y），请更换代付渠道"；</li>
+    <li>余额充足时点击「出款」，生成代付单号，订单状态置为「代付中」，弹出代付结果表（支持多笔订单逐行展示成功状态）；</li>
+    <li>后续通过「更新订单状态」拉取渠道回执，订单状态最终收敛为「代付成功 / 代付失败 / 代付异常」。</li>
+  </ol>
+  <div class="callout danger">
+    批量代付时，校验条件为「勾选订单全部已锁定 且 状态均为 待审核/审核中」，否则拦截并提示"存在未锁定或状态不可代付的订单，请检查勾选项"。
+  </div>
+
+  <h3>4.5 批量操作</h3>
+  <p>工具栏提供：批量锁定 / 批量解锁 / 批量拒绝 / 批量罚没 / 批量代付 / 批量异常处理。其中批量拒绝、批量罚没复用单笔的备注弹窗（作用于所有勾选订单），批量代付复用 §4.4 流程。</p>
+
+  <h3>4.6 审核类型判定逻辑（免审不通过 vs 自动代付条件不符）</h3>
+  <p>
+    「审核类型」字段用于标注一笔订单为何最终落在「待审核出款订单」列表、需要人工介入。系统对每笔提现订单依次经过<b>两道判断关卡</b>，
+    两道关卡各自失败会产生不同的审核类型，处理方式也不同：
+  </p>
+
+  <ol class="flow-steps">
+    <li>
+      <b>第一关：是否命中免审风控条件</b>——由「提现管理 → 提现条件配置」页的<b>「免审风控开关」</b>控制（详见 §7.1「免审风控开关」配置项）：
+      <ul style="margin-top:6px;">
+        <li>免审风控开关<b>关闭</b>：第一关<b>不生效</b>，所有订单直接视为"满足免审条件"，跳过第一关，<b>直接进入第二关</b>判断；</li>
+        <li>免审风控开关<b>开启</b>：系统判断会员是否命中「已选会员层级」中的任一层级标签——<b>命中</b>则判定为 <span class="pill red">免审不通过</span>，订单转人工审核；<b>未命中</b>则视为满足免审条件，进入第二关。</li>
+      </ul>
+    </li>
+    <li>
+      <b>第二关：是否满足自动代付条件</b>（「自动代付开关」是否开启、金额是否落在「自动代付金额范围」闭区间内、是否命中「首次出款强制人工审核」）<br>
+      <span style="color:var(--dim); font-size:13px;">→ 满足：系统自动发起代付，无需人工介入；不满足：判定为 <span class="pill orange">自动代付条件不符</span>，订单进入人工队列等待手动代付</span>
+    </li>
+  </ol>
+
+  <div class="callout">
+    <b>关于"免审风控开关关闭"的简化结论</b>：如果商户没有开启「免审风控开关」（即不需要按会员层级做人工审核拦截），
+    那么第一关对所有订单都直接放行，系统<b>只需要判断第二关——自动代付条件</b>即可决定订单是自动代付还是转人工（自动代付条件不符）。
+    换句话说，「免审风控开关」关闭时，「免审不通过」这个审核类型不会再出现，待审核列表里因风控进入的订单会归零，
+    列表中剩下的人工订单全部是「自动代付条件不符」。
+  </div>
+
+  <table class="spec">
+    <tr><th>审核类型</th><th>触发的关卡</th><th>常见触发场景</th><th>审核员应做什么</th></tr>
+    <tr>
+      <td><span class="pill red">免审不通过</span></td>
+      <td>第一关（免审风控）</td>
+      <td>
+        「免审风控开关」处于<b>开启</b>状态，且该会员被打上了「已选会员层级」中的某个标签
+        （第一期免审风控条件仅支持按会员层级判断，后续可扩展账号风险分、绑定手机/实名等其他维度）
+      </td>
+      <td>需要<b>认真核实订单本身是否存在风险</b>（会员身份、账户信息、行为异常等），核实无误后再决定通过/代付，或拒绝/罚没</td>
+    </tr>
+    <tr>
+      <td><span class="pill orange">自动代付条件不符</span></td>
+      <td>第二关（是否可自动出款）</td>
+      <td>提现金额超出「自动代付金额范围」/ 自动代付总开关被关闭 / 命中「首次出款强制人工审核」</td>
+      <td>该笔订单本身已通过第一关（或第一关未生效），审核员一般<b>只需核对信息无误后手动点击「代付」</b>即可，无需重新做风险判断</td>
+    </tr>
+  </table>
+
+  <div class="callout">
+    <b>关键区别</b>：「免审不通过」卡在"要不要审核"这一关，需要审核员认真判断订单风险；「自动代付条件不符」是第一关已经放行（无论是因为未命中风控层级，还是因为免审风控开关本身就关闭），
+    只是卡在"能不能自动打钱"这一关，审核员通常只需要手动完成代付操作。两者都会让订单出现在「待审核出款订单」列表中，
+    但对应的「操作备注」应分别记录是"审核未通过的具体原因"还是"未自动代付的具体原因"，便于后续数据统计与问题排查。
+  </div>
+
+  <!-- ============ 5. 已审核出款订单 ============ -->
+  <h2 id="m2"><span class="module-tag">模块二</span>已审核出款订单</h2>
+  <p>页面路径：<code>商户财务管理 / 已审核出款订单</code>。承接"待审核出款订单"处理完毕（代付成功 / 拒绝 / 罚没 / 人工完成）后的订单，供审核员与财务追溯查询、导出。</p>
+
+  <h3>5.1 筛选条件</h3>
+  <table class="spec">
+    <tr><th>字段</th><th>说明</th></tr>
+    <tr><td>地区 / 商户 / 渠道 / 层级 / 会员ID</td><td>同模块一</td></tr>
+    <tr><td>订单状态</td><td>全部 / 已完成 / 已拒绝 / 已罚没</td></tr>
+    <tr><td>出款类型 / 代付平台 / 代付渠道 / 订单号 / 外部订单号</td><td>同模块一</td></tr>
+    <tr><td>完成时间</td><td>区间选择，默认最近 9 天</td></tr>
+    <tr><td>提款金额</td><td>区间输入</td></tr>
+    <tr><td>操作人 / 出款方式 / 账号类型</td><td>补充维度</td></tr>
+    <tr><td>处理方式</td><td>全部 / 系统审核 / 人工审核 / PIX代付</td></tr>
+    <tr><td>首次出款</td><td>勾选框</td></tr>
+    <tr><td>今天/昨天/本周/上周/本月/上月</td><td>时间范围快捷按钮，点击自动填充「完成时间」区间</td></tr>
+  </table>
+
+  <h3>5.2 统计汇总卡片</h3>
+  <p>筛选结果上方固定展示一行统计：开始时间、结束时间、总人数、总订单数、总成功订单数、总提现金额、总手续费、实际出款金额。右上角提供「导出」按钮，导出当前筛选条件下的明细数据。</p>
+
+  <h3>5.3 列表字段</h3>
+  <p>序号、会员ID、会员层级、渠道、邀请ID、订单号、代付单号、账号状态、出款类型、提款金额、手续费、实际出款、绑定姓名、CPF ID、银行/账号类型、账户、出款方式、处理方式、代付渠道、是否首次出款、订单状态、创建时间、完成时间、操作备注、订单备注、操作信息（记录最近处理人/系统）、操作（明细）。</p>
+  <p>点击「明细」复用与模块一一致的订单明细弹窗（左侧订单信息，右侧今日/历史充值·提现·输赢统计），额外补充处理方式、创建时间、完成时间字段，作为只读查看，不含处置按钮。</p>
+
+  <!-- ============ 6. 总出款记录 ============ -->
+  <h2 id="m3"><span class="module-tag">模块三</span>总出款记录</h2>
+  <p>页面路径：<code>商户财务管理 / 总出款记录</code>。作为全量出款流水表，字段口径与「已审核出款订单」基本一致，但不做状态过滤（含所有历史订单），供财务对账、数据核对使用，默认时间范围更长（示例：整月）。</p>
+  <table class="spec">
+    <tr><th>与「已审核出款订单」的差异</th><th>说明</th></tr>
+    <tr><td>无统计汇总卡片</td><td>仅保留「导出」入口，弱化在页面展示统计，避免与已审核页重复</td></tr>
+    <tr><td>会员ID 增加「会员账号」组合查询</td><td>与模块一保持一致的组合下拉输入</td></tr>
+    <tr><td>列表新增「订单备注」「会员账号」列</td><td>用于对账场景下核对第三方账户信息</td></tr>
+    <tr><td>数据量级更大</td><td>示例分页显示"共 35759 条数据"，需支持跳页、每页条数切换</td></tr>
+  </table>
+
+  <!-- ============ 7. 提现管理 ============ -->
+  <h2 id="m4"><span class="module-tag">模块四</span>提现管理（自动代付配置）</h2>
+  <p>页面路径：<code>商户财务配置 / 提现管理 / 提现条件配置</code>。左列为原有的「会员提款条件限制」（无限制 / 需绑定手机号码），右列「提款审核限制」为本次新增的自动代付配置区块。</p>
+
+  <h3>7.1 配置项清单</h3>
+  <table class="spec">
+    <tr><th>配置项</th><th>控件</th><th>业务规则</th></tr>
+    <tr id="cfg-riskcontrol">
+      <td>免审风控开关 <span style="color:var(--dim); font-size:11.5px;">（新增，位于自动代付开关上方）</span></td>
+      <td>开关（默认开） + 会员层级多选</td>
+      <td>
+        用于具体定义模块一 §4.6 提到的「免审条件」——第一期免审风控条件<b>仅支持按会员层级判断</b>：<br>
+        · <b>开启</b>：可通过「修改」按钮弹出的多选弹窗，勾选一个或多个会员层级；会员一旦被打上所选任一层级标签，其提现订单直接判定为<b>「免审不通过」</b>，强制转人工审核；<br>
+        · <b>关闭</b>：该判断关卡不生效，所有订单都视为满足免审条件，直接进入「自动代付条件」判断（即系统此时只需要判断自动代付相关规则）。<br>
+        层级多选采用「只读展示 + 修改按钮 + 弹窗勾选」的交互，避免误触；未选择任何层级时展示为灰色「未选择任何层级」提示。
+      </td>
+    </tr>
+    <tr>
+      <td>自动代付开关</td><td>开关（默认开）</td>
+      <td>开启：符合免审条件 且 金额落在自动代付范围内的订单，系统自动发起代付，无需人工介入；<br>关闭：所有订单一律转人工处理，「自动代付金额范围」输入框同步置灰禁用</td>
+    </tr>
+    <tr>
+      <td>自动代付金额范围</td><td>最小金额 ~ 最大金额</td>
+      <td>
+        仅在此区间内的订单才会触发自动代付；超出范围的订单转人工审核（对应模块一中「审核类型：自动代付条件不符」）。<br>
+        <b>边界值口径（已确认）</b>：区间为<b>闭区间</b>，提款金额<b>等于最小值或最大值</b>时均计入自动代付范围（即 [最小金额, 最大金额]）。
+      </td>
+    </tr>
+    <tr>
+      <td>首次出款强制人工审核</td><td>开关（新增，默认开）</td>
+      <td>
+        开启后，会员的<b>首次出款</b>订单（列表「是否首次出款」= 是）一律转人工审核，<b>不受自动代付金额范围限制</b>，即便金额在自动代付区间内也不会自动代付；
+        关闭后，首次出款订单与其他订单一样按金额范围规则判断。<br>
+        （§12 已确认：需要该开关，UI 位置见本页「提现条件配置」区块）
+      </td>
+    </tr>
+    <tr>
+      <td>代付失败自动驳回</td><td>开关（默认开）</td>
+      <td>
+        代付订单轮询所有满足出款金额条件的代付渠道，若全部尝试均失败，订单自动拒绝，提现金额退回会员账户，无需人工介入。<br>
+        <b>失败判定口径（已确认）</b>：本期<b>不做轮询重试</b>——只要本轮所有可用渠道尝试均返回失败，立即判定为失败并自动驳回，不设置额外的轮询次数上限或超时等待。
+      </td>
+    </tr>
+    <tr>
+      <td>自动代付渠道配置</td><td>渠道列表（开关 + 下架规则下拉）</td>
+      <td>
+        逐个渠道配置：① 是否上架用于自动代付；② 自动下架标准：<b>不自动下架</b>（推荐）/ 余额低于阈值时自动下架（需填余额阈值）/ 连续失败超过次数时自动下架（需填次数阈值）。<br>
+        <b>渠道被禁用/下架时的联动规则（已确认）</b>：若该渠道下仍存在「进行中」（代付中）的订单，这些订单状态统一置为<b>「代付异常」</b>，转人工核实是否需要重新补单，不做自动切换到其他渠道重试。
+      </td>
+    </tr>
+  </table>
+  <div class="callout danger">
+    产品强调：<b>建议将下架标准默认配置为"不自动下架"</b>。如果渠道被自动下架、又恰好是唯一可用渠道，会导致自动代付无渠道可用，
+    大量订单被迫转入人工队列，产生积压。研发需要在配置页面用醒目文案（红字）提示该风险，本 PRD 也已在原型中体现。
+  </div>
+
+  <h3>7.2 保存/重置</h3>
+  <p>页面底部提供「保存」「重置」按钮。保存时校验：若「自动代付开关」为开，则金额范围两个字段均为必填且最小值需小于最大值（原型暂未做该项拦截，建议开发阶段补充）。</p>
+
+  <!-- ============ 8. 代付商户管理 ============ -->
+  <h2 id="m5"><span class="module-tag">模块五</span>代付商户管理</h2>
+  <p>页面路径：<code>商户财务配置 / 代付商户管理</code>。用于维护接入的第三方代付渠道基础资料，是模块一「代付渠道」下拉与模块四「渠道配置」列表的数据来源。</p>
+
+  <h3>8.1 筛选条件</h3>
+  <p>最近操作时间区间 + 关键字搜索（通道号/代付渠道/代付平台）+ 重置/查询。页面下方红字提示"当前时间为 UTC-3 时区"，避免审核员因时区误差误判操作时间。</p>
+
+  <h3>8.2 列表字段</h3>
+  <table class="spec">
+    <tr><th>字段</th><th>说明</th></tr>
+    <tr><td>排序</td><td>
+      列表默认按<b>创建时间降序</b>排列（已确认），即最新创建/新增的渠道排在最前面；「排序」数值为辅助手动调整展示顺序的字段，供后续人工调整使用
+    </td></tr>
+    <tr><td>三方通道号 / 代付渠道 / 代付平台</td><td>三段式展示："三方通道号" 为该渠道在三方平台侧的账户编号（选填），"代付渠道" 为本系统内展示名称（必填），"代付平台" 为归属的三方支付服务商（必填）</td></tr>
+    <tr><td>通道说明</td><td>选填备注，如"USDT提现"</td></tr>
+    <tr><td>币种 / 单位</td><td>该渠道结算的币种（如 BRL / VND / CNY）及计价单位（如"元-整数"）</td></tr>
+    <tr><td>状态</td><td>启用（绿色）/ 禁用（红色），与「操作」列按钮联动</td></tr>
+    <tr><td>最近操作时间 / 最近操作人</td><td>审计信息</td></tr>
+  </table>
+
+  <h3>8.3 操作与表单规则</h3>
+  <table class="spec">
+    <tr><th>操作</th><th>说明</th></tr>
+    <tr><td>详情</td><td>只读查看该渠道完整信息</td></tr>
+    <tr><td>启用 / 禁用</td><td>
+      一键切换渠道可用状态，禁用后该渠道不再出现在模块一「代付」弹窗的可选渠道列表中。<br>
+      <b>联动规则（已确认）</b>：若禁用时该渠道下仍存在「进行中」（代付中）的订单，这些订单状态统一转为<b>「代付异常」</b>，交由人工核实是否需要补单，不做自动切渠道重试。
+    </td></tr>
+    <tr><td>编辑</td><td>打开与「添加」相同的表单弹窗，预填当前数据</td></tr>
+  </table>
+  <p>「添加/编辑」表单字段：</p>
+  <table class="spec">
+    <tr><th>字段</th><th>必填</th><th>控件</th></tr>
+    <tr><td>代付平台</td><td>是</td><td>下拉选择</td></tr>
+    <tr><td>三方通道号</td><td>否</td><td>输入框</td></tr>
+    <tr><td>代付渠道</td><td>是</td><td>输入框</td></tr>
+    <tr><td>代付方式</td><td>是</td><td>下拉选择（PIX / USDT / 银行卡）</td></tr>
+    <tr><td>排序</td><td>是</td><td>数字输入</td></tr>
+    <tr><td>通道说明</td><td>否</td><td>多行文本</td></tr>
+  </table>
+  <div class="callout">提交时校验四个必填项（代付平台 / 代付渠道 / 代付方式 / 排序），任一缺失则拦截提交并提示补全。</div>
+
+  <!-- ============ 9. 全局交互规范 ============ -->
+  <h2 id="global">9. 全局交互规范</h2>
+
+  <h3>9.1 操作按钮悬浮提示</h3>
+  <p>列表「操作」列的图标按钮，鼠标悬浮时在按钮正上方弹出提示卡片：放大版的彩色圆角图标 + 下方灰色文字标签，帮助审核员快速识别图标含义，降低误触概率。图标与颜色对照：</p>
+  <table class="spec">
+    <tr><th>图标</th><th>名称</th><th>颜色</th><th>说明</th></tr>
+    <tr><td class="mono">≡</td><td>明细</td><td><span class="pill gray">灰</span></td><td>查看该笔订单的明细信息</td></tr>
+    <tr><td class="mono">🔒</td><td>锁定</td><td><span class="pill blue">蓝</span></td><td>锁定后仅锁定人与最高权限账号可操作</td></tr>
+    <tr><td class="mono">🔓</td><td>解锁</td><td><span class="pill blue">蓝</span></td><td>解锁后所有具后台权限账号均可操作</td></tr>
+    <tr><td class="mono">🗂</td><td>处理</td><td><span class="pill orange">橙</span></td><td>可通过 / 拒绝 / 罚没 / 人工完成 / 代付</td></tr>
+    <tr><td class="mono">↺</td><td>拒绝</td><td><span class="pill red">红</span></td><td>金额退回会员余额</td></tr>
+    <tr><td class="mono">⊘</td><td>罚没</td><td><span class="pill red">深红</span></td><td>金额直接扣除，不返回余额，不计入报表</td></tr>
+    <tr><td class="mono">Ⓟ</td><td>代付</td><td><span class="pill blue">蓝</span></td><td>对该笔订单发起代付</td></tr>
+    <tr><td class="mono">↻</td><td>更新订单状态</td><td><span class="pill gray">灰</span></td><td>拉取最新的订单状态</td></tr>
+  </table>
+
+  <h3>9.2 消息提示（Toast）</h3>
+  <p>所有非阻断性操作反馈（查询完成、复制成功、批量操作完成、状态刷新等）统一使用顶部居中的黑底浮层提示，2 秒左右自动消失，不打断用户当前操作。</p>
+
+  <h3>9.3 备注双轨制</h3>
+  <p>凡涉及资金处置（拒绝 / 罚没 / 人工完成）的操作，均要求同时填写两类备注：</p>
+  <table class="spec">
+    <tr><th>备注类型</th><th>可见范围</th></tr>
+    <tr><td>操作备注</td><td>会以邮件形式发送给会员，并展示在会员端「提款详情」页面</td></tr>
+    <tr><td>订单备注</td><td>仅在后台内部可见，不对会员展示</td></tr>
+  </table>
+
+  <h3>9.4 锁定机制</h3>
+  <p>锁定的目的是防止多名审核员同时处理同一笔订单造成的重复操作或资金重复处理风险。锁定后的订单，只有「锁定操作人」与「拥有最高权限的账号」可以继续操作；其余账号即便有权限查看列表，也无法对该订单进行拒绝/罚没/代付等处置操作，只能查看明细。</p>
+
+  <!-- ============ 10. 数据字典 ============ -->
+  <h2 id="dict">10. 数据字典 / 状态枚举</h2>
+
+  <h3>10.1 订单状态（待审核出款订单）</h3>
+  <table class="spec">
+    <tr><th>状态</th><th>含义</th><th>可执行操作</th></tr>
+    <tr><td><span class="pill gray">待审核</span></td><td>已提交，尚未进入人工或系统审核</td><td>锁定 → 处理/拒绝/罚没/代付</td></tr>
+    <tr><td><span class="pill blue">审核中</span></td><td>已进入审核流程但未决策（含自动代付条件不符被打回的订单）</td><td>同上</td></tr>
+    <tr><td><span class="pill orange">代付中</span></td><td>已发起代付请求，等待三方渠道回执</td><td>更新订单状态</td></tr>
+    <tr><td><span class="pill green">代付成功</span></td><td>三方渠道确认打款成功</td><td>更新订单状态（终态，随后流转至已审核出款订单）</td></tr>
+    <tr><td><span class="pill red">代付失败</span></td><td>三方渠道明确返回失败</td><td>更新订单状态；触发「代付失败自动驳回」逻辑</td></tr>
+    <tr><td><span class="pill red">代付异常</span></td><td>渠道超时/返回异常，结果不确定</td><td>更新订单状态；建议人工核实</td></tr>
+  </table>
+
+  <h3>10.2 订单状态（已审核出款订单）</h3>
+  <table class="spec">
+    <tr><th>状态</th><th>含义</th></tr>
+    <tr><td><span class="pill green">已完成</span></td><td>代付成功 / 人工完成，订单结束</td></tr>
+    <tr><td><span class="pill red">已拒绝</span></td><td>审核员拒绝，金额已退回会员余额</td></tr>
+    <tr><td><span class="pill red">已罚没</span></td><td>审核员罚没，金额不退回，不计入报表</td></tr>
+  </table>
+
+  <h3>10.3 处理方式</h3>
+  <table class="spec">
+    <tr><th>值</th><th>说明</th></tr>
+    <tr><td>系统审核</td><td>命中免审条件，系统自动通过并代付，操作人显示为 <code>system</code></td></tr>
+    <tr><td>人工审核</td><td>由审核员人工处理</td></tr>
+    <tr><td>PIX代付</td><td>标注该订单通过 PIX 方式完成代付</td></tr>
+  </table>
+
+  <h3>10.4 渠道下架标准</h3>
+  <table class="spec">
+    <tr><th>值</th><th>说明</th></tr>
+    <tr><td>不自动下架（推荐）</td><td>渠道永久保留在自动代付可用池中，需人工手动下架</td></tr>
+    <tr><td>余额低于阈值时自动下架</td><td>渠道余额低于配置的数值时，自动从可用池移除</td></tr>
+    <tr><td>连续失败超过次数时自动下架</td><td>渠道连续代付失败次数超过配置值时，自动从可用池移除</td></tr>
+  </table>
+
+  <!-- ============ 11. 非功能性需求 ============ -->
+  <h2 id="nfr">11. 非功能性需求</h2>
+  <ul>
+    <li><b>权限控制</b>：锁定机制依赖账号权限体系，需明确"最高权限账号"的定义与识别方式；</li>
+    <li><b>审计日志</b>：锁定/解锁/拒绝/罚没/人工完成/代付等操作均需记录操作人、操作时间、操作前后状态，便于事后追溯；</li>
+    <li><b>并发安全</b>：批量操作、代付余额校验需在服务端做二次校验，避免并发场景下超发/超额代付；</li>
+    <li><b>时区展示</b>：所有时间字段需明确展示时区（如 UTC-3），避免跨时区团队协作时产生歧义；</li>
+    <li><b>大数据量分页</b>：总出款记录等页面数据量可达数万条，需要后端分页 + 索引优化，避免全表扫描。</li>
+  </ul>
+
+  <!-- ============ 12. 待确认问题 ============ -->
+  <h2 id="open">12. 已确认决策记录</h2>
+  <p>以下问题已与业务确认，结论已同步更新至对应章节，此处留存决策记录备查：</p>
+  <table class="spec">
+    <tr><th>#</th><th>问题</th><th>确认结论</th></tr>
+    <tr>
+      <td>1</td>
+      <td>「代付商户管理」中「排序」字段的具体业务含义与排序方向</td>
+      <td>列表默认按<b>创建时间降序</b>排列（最新创建的在最前）；详见 §8.2</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>「渠道禁用」后，是否需要连带处理该渠道下"进行中"的代付订单</td>
+      <td>需要连带处理：渠道下仍存在「进行中」订单时，统一置为<b>「代付异常」</b>，转人工核实是否补单；详见 §7.1、§8.3</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>自动代付金额范围的边界值是否计入范围，需明确开闭区间</td>
+      <td><b>闭区间</b>：金额等于最小值或最大值均计入自动代付范围；详见 §7.1</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>「代付失败自动驳回」是否需要设置轮询次数上限或超时时间</td>
+      <td>本期<b>不做轮询重试</b>，本轮所有可用渠道尝试失败后立即驳回；详见 §7.1</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>是否需要针对「首次出款」订单强制转人工审核，不受自动代付金额范围限制</td>
+      <td>
+        <b>需要</b>。在「提现管理 → 提现条件配置」页新增独立开关<b>「首次出款强制人工审核」</b>：
+        开启后首次出款订单一律转人工，不受金额范围限制；详见 §7.1
+      </td>
+    </tr>
+  </table>
+
+  <div class="footer-note">
+    本文档基于交互原型整理，字段名称、状态枚举、按钮文案均以原型页面为准；如有变更请同步更新本文档并升级版本号。<br>
+    V1.1 变更说明：补充上述 5 项业务决策至对应章节，并在「提现管理」原型中新增「首次出款强制人工审核」配置项。<br>
+    V1.2 变更说明：新增「免审风控开关」配置项（§7.1），将模块一 §4.6 中原本抽象的"免审条件"具体落实为"按会员层级判断"，
+    并明确该开关关闭时第一关不生效、系统只需判断自动代付条件的简化逻辑；层级选择交互采用"只读展示 + 修改按钮 + 弹窗多选"。
+  </div>
+
+</div>
+</body>
+</html>
