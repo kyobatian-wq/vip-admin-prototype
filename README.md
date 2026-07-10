@@ -1,51 +1,36 @@
-[README_2.md](https://github.com/user-attachments/files/29736724/README_2.md)
-# VIP管理系统迭代 — 原型与文档
+[README_3.md](https://github.com/user-attachments/files/29875327/README_3.md)
+# VIP Admin Prototype
 
-本仓库用于存放 **DD.GG VIP系统迭代**相关的高保真原型与产品文档，均可直接在浏览器中打开查看，无需下载。对标参考对象为 Panda 后台/客户端的 VIP 相关页面。
+商户财务/出款审核后台 与 VIP 客户端页面的交互原型及产品需求文档合集。
 
-## 📄 文件说明
+所有 `.html` 文件均为可直接在浏览器中打开的静态原型（含模拟数据与交互逻辑），无需安装依赖。GitHub 本身不会直接渲染 HTML，如果想**点击即预览**而不是看源码，可以用下面「预览」列的链接（通过 [htmlpreview.github.io](https://htmlpreview.github.io) 转发渲染）。
 
-| 文件 | 说明 | 在线访问 |
-|---|---|---|
-| [`VIP管理后台交互设计稿0707改.html`](https://kyobatian-wq.github.io/vip-admin-prototype/VIP管理后台交互设计稿0707改.html) | 后台管理端高保真交互原型：VIP总开关（本期锁定为开启，不可点击关闭）、稽核限定平台（可展开选具体游戏）、等级编辑弹窗（按等级±新增/删除）、领取规则、规则说明（富文本编辑器）等 | 👉 [点击打开](https://kyobatian-wq.github.io/vip-admin-prototype/VIP管理后台交互设计稿0707改.html) |
-| [`VIP管理后台产品需求文档PRD0707改.html`](https://kyobatian-wq.github.io/vip-admin-prototype/VIP管理后台产品需求文档PRD0707改.html) | 后台管理端产品需求文档（PRD）网页版，含左侧目录导航，含「保级开关对边界场景的影响」「晋级规则说明」等小贴士 | 👉 [点击打开](https://kyobatian-wq.github.io/vip-admin-prototype/VIP管理后台产品需求文档PRD0707改.html) |
-| [`VIP客户端页面迭代原型0707改.html`](https://kyobatian-wq.github.io/vip-admin-prototype/VIP客户端页面迭代原型0707改.html) | 客户端（App）新增页面原型：VIP保级说明页签 + 领取按钮三态逻辑（未达标禁用/已达标待充值/已达标领取成功）+ 充值引导弹窗 + 领取成功弹窗，含与后台配置的动态数据绑定标注 | 👉 [点击打开](https://kyobatian-wq.github.io/vip-admin-prototype/VIP客户端页面迭代原型0707改.html) |
-| [`VIP客户端页面迭代原型PRD.html`](https://kyobatian-wq.github.io/vip-admin-prototype/VIP客户端页面迭代原型PRD.html) | 客户端页面产品需求文档（PRD）网页版，含左侧目录导航，覆盖保级说明页签、按钮三态逻辑、动态数据绑定说明等 | 👉 [点击打开](https://kyobatian-wq.github.io/vip-admin-prototype/VIP客户端页面迭代原型PRD.html) |
+## 📄 文件目录
 
-> 💡 点击文件名或"点击打开"均可直接跳转到对应的在线页面（通过 GitHub Pages 渲染）。链接由仓库地址 + 文件名拼接而成，如果之后重命名文件，记得同步更新此表格中的链接。
+| 分类 | 文件 | 说明 | 源码 | 预览 |
+| --- | --- | --- | --- | --- |
+| VIP 客户端 | `VIP客户端页面迭代原型0707改.html` | VIP 客户端页面迭代原型（0707 更新版） | [查看源码](./VIP客户端页面迭代原型0707改.html) | [在线预览](https://htmlpreview.github.io/?https://github.com/kyobatian-wq/vip-admin-prototype/blob/main/VIP客户端页面迭代原型0707改.html) |
+| VIP 客户端 | `VIP客户端页面迭代原型PRD.html` | VIP 客户端页面迭代原型对应的产品需求文档 | [查看源码](./VIP客户端页面迭代原型PRD.html) | [在线预览](https://htmlpreview.github.io/?https://github.com/kyobatian-wq/vip-admin-prototype/blob/main/VIP客户端页面迭代原型PRD.html) |
+| 管理后台 | `VIP管理后台交互设计稿0707改.html` | VIP 管理后台交互设计稿（0707 更新版） | [查看源码](./VIP管理后台交互设计稿0707改.html) | [在线预览](https://htmlpreview.github.io/?https://github.com/kyobatian-wq/vip-admin-prototype/blob/main/VIP管理后台交互设计稿0707改.html) |
+| 管理后台 | `VIP管理后台产品需求文档PRD0707改.html` | VIP 管理后台产品需求文档（0707 更新版） | [查看源码](./VIP管理后台产品需求文档PRD0707改.html) | [在线预览](https://htmlpreview.github.io/?https://github.com/kyobatian-wq/vip-admin-prototype/blob/main/VIP管理后台产品需求文档PRD0707改.html) |
+| 出款/代付 | `merchant_finance_app_1.html` | 商户财务管理后台原型：待审核出款订单 / 已审核出款订单 / 总出款记录 / 提现管理（自动代付配置）/ 代付商户管理，五个页面整合在同一个文件中 | [查看源码](./merchant_finance_app_1.html) | [在线预览](https://htmlpreview.github.io/?https://github.com/kyobatian-wq/vip-admin-prototype/blob/main/merchant_finance_app_1.html) |
+| 出款/代付 | `withdrawal_and_autopay_PRD.html` | 上述出款与自动代付模块对应的产品需求文档（PRD） | [查看源码](./withdrawal_and_autopay_PRD.html) | [在线预览](https://htmlpreview.github.io/?https://github.com/kyobatian-wq/vip-admin-prototype/blob/main/withdrawal_and_autopay_PRD.html) |
 
-## 🔗 仓库地址
+> 「预览」链接依赖第三方服务 htmlpreview.github.io 实时拉取仓库文件渲染，仓库需保持 **Public**，且文件更新后预览会自动同步（可能有几分钟缓存延迟）。
 
-- 在线预览根地址：<https://kyobatian-wq.github.io/vip-admin-prototype/>
-- 仓库源码地址：<https://github.com/kyobatian-wq/vip-admin-prototype>
+## 🗂 模块说明（出款/代付部分）
 
-## 📌 核心迭代内容一览
+`merchant_finance_app_1.html` 内部通过顶部标签页 + 左侧菜单在以下 5 个子页面间切换：
 
-### 后台管理端
-1. **总开关**：本期固定为「开启」状态并锁定，不支持关闭；点击无任何响应，二次确认弹窗设计留作后续版本预留
-2. **稽核倍数**：仅支持正整数，所需稽核流水 = 奖励金额 × 稽核倍数（全局统一配置）
-3. **稽核限定平台**：支持按游戏商展开勾选具体游戏
-4. **VIP等级配置**：只读表格 + 编辑弹窗，弹窗内按等级区块单独 ＋/－ 新增删除
-5. **保级机制**：每月1号判定上月（自然月）充值/流水，不达标降1级；晋级奖励的保留/重复领取规则受保级开关影响，日/周/月奖励领取逻辑与保级开关无关
-6. **晋级规则**：满足条件自动晋级，不限制每日最大晋级次数；未领取的晋级奖励持续累加，跨级晋级时一次性合并发放
-7. **领取规则**：4种未领取奖励处理方案，支持"N天内充值"受众判定
-8. **规则说明**：默认文案 / 自定义富文本编辑器，支持背景图上传与实时预览
+1. **待审核出款订单** — 审核员处理会员提现申请的工作台（锁定/拒绝/罚没/人工完成/代付）
+2. **已审核出款订单** — 已完结订单的查询、统计汇总与导出
+3. **总出款记录** — 全量出款流水，供财务对账
+4. **提现管理（提现条件配置）** — 免审风控开关、自动代付开关、金额范围、代付失败自动驳回、渠道配置
+5. **代付商户管理** — 第三方代付渠道基础资料维护
 
-### 客户端App
-9. **新增页签**："Instruções para manter o nível"（保级说明），含保级规则文案、保级等级表、完整VIP规则说明
-10. **动态数据绑定**：规则文案中的"稽核倍数（rollover Nx）""生效场馆（Slot清单）"均读取后台配置动态生成
-11. **领取按钮三态逻辑**：未达标（真正禁用，不可点击、无弹窗）/ 已达标-未充值（点击弹出充值引导弹窗）/ 已达标-已充值（点击弹出领取成功弹窗）
+对应的完整需求说明见 `withdrawal_and_autopay_PRD.html`。
 
-## 🕘 更新记录
+## 🕒 更新记录
 
-| 日期 | 内容 |
-|---|---|
-| 2026-07 | 首次上传后台交互原型 |
-| 2026-07 | 补充PRD文档（网页版+Word版）、客户端页面原型 |
-| 2026-07 | 统一文件命名，标记「_终稿」版本；旧版原型保留作历史存档 |
-| 2026-07 | 后台：总开关改为本期锁定态；客户端：补充领取按钮三态逻辑与两个弹窗；PRD：补充保级开关边界场景小贴士 |
-| 2026-07 | 文件重命名为「0707改」版本，清理旧版本文件 |
-| 2026-07 | 新增客户端页面独立PRD文档（网页版），README同步更新 |
-
----
-如需修改本文档结构或补充其他材料的链接，直接编辑此文件后 Commit 即可，无需重新配置 GitHub Pages。
+- 2026-07-07：VIP 客户端 / 管理后台交互设计稿与 PRD 初版
+- 2026-07-10：新增商户财务出款审核与自动代付模块原型（`merchant_finance_app_1.html`）及对应 PRD（`withdrawal_and_autopay_PRD.html`），并将「免审风控开关」「首次出款强制人工审核」等确认后的业务规则同步落地
