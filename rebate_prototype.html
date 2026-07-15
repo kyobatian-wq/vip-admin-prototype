@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Rebate 交互原型</title>
+<style>
+  :root{
+    --bg:#141414;
+    --panel:#1c1c1c;
+    --card:#232323;
+    --card2:#2a2a2a;
+    --border:#333;
+    --text:#eee;
+    --sub:#9a9a9a;
+    --accent:#f0a83c;
+    --accent2:#f2c744;
+    --green:#1f8a4c;
+    --yellow:#f2df3a;
+    --red:#e3453e;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:#0a0a0a;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:30px 10px;
+    color:var(--text);
+  }
+  /* ---- 评审用配置开关（非客户端真实 UI，仅用于预览两种模式） ---- */
+  .preview-toggle{
+    width:478px;
+    max-width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    background:#fff;
+    border:1px solid #e0e0e0;
+    border-radius:10px;
+    padding:10px 14px;
+    margin-bottom:14px;
+    font-size:12px;
+    color:#333;
+  }
+  .preview-toggle .seg{display:flex; gap:6px;}
+  .preview-toggle .seg-btn{
+    border:1px solid #ccc;
+    background:#f5f5f5;
+    color:#555;
+    border-radius:6px;
+    padding:6px 12px;
+    font-size:12px;
+    cursor:pointer;
+  }
+  .preview-toggle .seg-btn.active{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+    font-weight:600;
+  }
+  .frame{
+    width:478px;
+    max-width:100%;
+    background:var(--bg);
+    border-radius:20px;
+    overflow:hidden;
+    box-shadow:0 0 0 8px #000, 0 20px 40px rgba(0,0,0,.6);
+    position:relative;
+  }
+  .screen{display:none; min-height:780px; flex-direction:column;}
+  .screen.active{display:flex;}
+
+  /* ---- Top Tabs ---- */
+  .tabbar{
+    display:flex;
+    align-items:center;
+    gap:22px;
+    padding:16px 16px 10px;
+    background:#1a1a1a;
+    overflow-x:auto;
+    white-space:nowrap;
+    border-bottom:1px solid #000;
+  }
+  .tabbar::-webkit-scrollbar{display:none;}
+  .tab{
+    position:relative;
+    font-size:15px;
+    color:#9a9a9a;
+    padding-bottom:10px;
+    cursor:default;
+    flex:0 0 auto;
+  }
+  .tab.active{
+    color:#fff;
+    font-weight:600;
+    border-bottom:2px solid var(--accent2);
+  }
+  .dot{
+    position:absolute;
+    top:-4px; right:-8px;
+    width:7px; height:7px;
+    border-radius:50%;
+    background:var(--red);
+  }
+  /* ---- highlight: tabs touched by this round of changes ---- */
+  .tab.highlight{
+    background:rgba(240,168,60,.16);
+    border-radius:6px;
+    padding:4px 8px 10px;
+    color:#f2c744;
+    box-shadow:0 0 0 1px rgba(242,199,68,.35);
+  }
+  .tab.highlight.active{color:#fff;}
+  .tab-badge{
+    position:absolute;
+    top:-13px;
+    left:50%;
+    transform:translateX(-50%);
+    background:var(--red);
+    color:#fff;
+    font-size:8px;
+    line-height:1;
+    padding:2px 5px;
+    border-radius:6px;
+    white-space:nowrap;
+    font-weight:700;
+    letter-spacing:.2px;
+  }
+
+  /* ---- Summary bar ---- */
+  .summary{
+    display:flex;
+    justify-content:space-between;
+    padding:14px 16px;
+    font-size:13px;
+    color:#cfcfcf;
+    background:var(--bg);
+  }
+  .summary b{color:var(--accent2); font-weight:600;}
+  .summary-hint{
+    /* 已确认：该说明文案不展示给客户端玩家，仅保留结构供内部核对逻辑，通过 display:none 隐藏 */
+    display:none;
+    padding:0 16px 12px;
+    font-size:11px;
+    color:#6f6f6f;
+    margin-top:-6px;
+  }
+  .hist-loading{
+    text-align:center;
+    color:#777;
+    font-size:12px;
+    padding:24px 0;
+    display:none;
+  }
+  .hist-loading.show{display:block;}
+
+  /* ---- Body layout: left rail + right list ---- */
+  .body{
+    display:flex;
+    flex:1;
+    padding:0 16px 16px;
+    gap:12px;
+  }
+  .rail{
+    width:82px;
+    flex:0 0 auto;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .type-btn{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:10px 4px 8px;
+    text-align:center;
+    cursor:pointer;
+    font-size:12px;
+    color:#ddd;
+    user-select:none;
+  }
+  .type-btn .icon{font-size:24px; display:block; margin-bottom:4px;}
+  .type-btn.selected{
+    border:2px solid var(--accent2);
+    box-shadow:0 0 0 1px var(--accent2) inset;
+  }
+  .action-btn{
+    border:none;
+    border-radius:8px;
+    padding:10px 4px;
+    text-align:center;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .btn-green{background:var(--green); color:#fff;}
+  .btn-yellow{background:var(--yellow); color:#222;}
+  .action-btn.disabled{
+    opacity:.4;
+    cursor:not-allowed;
+    pointer-events:none;
+  }
+
+  .list{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    overflow-y:auto;
+    max-height:640px;
+    padding-right:2px;
+  }
+  .prov-card{
+    background:var(--card);
+    border-radius:10px;
+    padding:10px 12px;
+    cursor:pointer;
+    border:1px solid #2c2c2c;
+  }
+  .prov-card:hover{border-color:var(--accent2);}
+  .prov-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    font-size:13px;
+  }
+  .prov-name{display:flex; align-items:center; gap:6px; font-weight:600;}
+  .prov-name .ic{font-size:16px;}
+  .prov-mid{
+    color:var(--sub);
+  }
+  .prov-second{
+    display:flex;
+    align-items:center;
+    margin-top:8px;
+    font-size:12px;
+    color:#bdbdbd;
+    gap:8px;
+  }
+  .prov-second .rate{color:var(--accent2); font-weight:600;}
+  .prov-progress{
+    position:relative;
+    flex:1;
+    min-width:60px;
+    height:20px;
+    background:#3a3a3a;
+    border-radius:10px;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+  }
+  .prov-progress-fill{
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width:0%;
+    background:linear-gradient(90deg,#f0a83c,#f2c744);
+    border-radius:10px;
+  }
+  .prov-progress-label{
+    position:relative;
+    z-index:1;
+    padding:0 8px;
+    white-space:nowrap;
+    color:#ccc;
+  }
+  .prov-coletavel{
+    white-space:nowrap;
+    display:flex;
+    align-items:center;
+    gap:2px;
+  }
+  .chev{color:#777; font-size:16px; margin-left:2px;}
+  .empty-hint{
+    color:#777;
+    font-size:12px;
+    text-align:center;
+    padding:30px 0;
+  }
+  /* ---- 统一缺省状态：Sem Registros ---- */
+  .empty-state{
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:110px 0 60px;
+    color:#666;
+  }
+  .empty-state.show{display:flex;}
+  .empty-state .empty-icon{
+    position:relative;
+    font-size:64px;
+    opacity:.35;
+    margin-bottom:16px;
+    line-height:1;
+  }
+  .empty-state .empty-icon .search{
+    position:absolute;
+    right:-10px;
+    bottom:-8px;
+    font-size:30px;
+  }
+  .empty-state .empty-text{
+    font-size:14px;
+    color:#777;
+  }
+
+  /* ---- Bottom nav ---- */
+  .bottomnav{
+    display:flex;
+    justify-content:space-around;
+    align-items:center;
+    padding:10px 6px;
+    background:#111;
+    border-top:1px solid #000;
+    font-size:11px;
+    color:#999;
+    margin-top:auto;
+  }
+  .navitem{display:flex; flex-direction:column; align-items:center; gap:4px; position:relative;}
+  .navitem .navicon{font-size:20px;}
+  .navitem.center .navicon{
+    background:linear-gradient(135deg,#c98cf0,#8a5cf5);
+    width:44px;height:44px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    margin-top:-18px;
+    border:3px solid #111;
+  }
+  .navitem.promo{color:var(--accent2);}
+  .navreddot{position:absolute; top:-2px; right:2px; width:6px; height:6px; border-radius:50%; background:var(--red);}
+
+  /* ---- Detail screen ---- */
+  .detail-header{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:16px;
+    background:#232323;
+  }
+  .back{
+    font-size:20px;
+    cursor:pointer;
+    color:#fff;
+    width:24px;
+  }
+  .detail-title{
+    flex:1;
+    text-align:center;
+    font-size:16px;
+    font-weight:600;
+    margin-right:24px;
+  }
+  .filters{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:14px 16px;
+    position:relative;
+  }
+  .dropdown{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:8px 10px;
+    font-size:13px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    cursor:pointer;
+    user-select:none;
+  }
+  .dropdown .arrow{font-size:10px; color:#999; transition:transform .15s;}
+  .dropdown.open .arrow{transform:rotate(180deg);}
+  .filters .colhead{
+    flex:1;
+    display:flex;
+    justify-content:space-between;
+    font-size:12px;
+    color:#999;
+    padding-left:6px;
+  }
+  .dropdown-panel{
+    position:absolute;
+    left:16px;
+    top:56px;
+    background:#1c1c1c;
+    border:1px solid #333;
+    border-radius:8px;
+    padding:10px;
+    z-index:20;
+    box-shadow:0 10px 30px rgba(0,0,0,.6);
+    display:none;
+  }
+  .dropdown-panel.show{display:block;}
+  .dp-simple{display:flex; gap:8px;}
+  .dp-opt{
+    padding:8px 16px;
+    border-radius:6px;
+    font-size:13px;
+    background:#2a2a2a;
+    color:#aaa;
+    cursor:pointer;
+  }
+  .dp-opt.sel{background:var(--accent2); color:#222; font-weight:600;}
+  .dp-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+    width:340px;
+    max-width:78vw;
+  }
+  .dp-cell{
+    background:#2a2a2a;
+    color:#bbb;
+    font-size:12px;
+    text-align:center;
+    padding:9px 4px;
+    border-radius:6px;
+    cursor:pointer;
+  }
+  .dp-cell.sel{background:var(--accent2); color:#222; font-weight:700;}
+
+  table.rebate-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13px;
+  }
+  table.rebate-table thead th{
+    color:#999;
+    font-weight:500;
+    text-align:center;
+    padding:10px 6px;
+    font-size:12px;
+  }
+  table.rebate-table tbody tr:nth-child(odd){background:#1a1a1a;}
+  table.rebate-table tbody tr:nth-child(even){background:#141414;}
+  table.rebate-table td{
+    text-align:center;
+    padding:12px 6px;
+    color:#e5e5e5;
+  }
+  .dim{opacity:.35; pointer-events:none;}
+  .overlay-close{
+    position:fixed;
+    inset:0;
+    z-index:10;
+    display:none;
+  }
+  .overlay-close.show{display:block;}
+
+  /* ---- Historico screen ---- */
+  .hist-filter{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 16px;
+    position:relative;
+  }
+  .hist-bonus{font-size:15px; color:#eee;}
+  .hist-bonus b{color:var(--accent2); font-weight:600;}
+  .dp-grid2{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+    width:300px;
+    max-width:78vw;
+  }
+  .dp-cell2{
+    background:#2a2a2a;
+    color:#bbb;
+    font-size:13px;
+    text-align:center;
+    padding:12px 6px;
+    border-radius:8px;
+    cursor:pointer;
+  }
+  .dp-cell2.sel{background:var(--yellow); color:#222; font-weight:700;}
+
+  /* ---- Receber modal ---- */
+  .modal-overlay{
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,.75);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:60;
+    padding:24px;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal-card{
+    width:100%;
+    max-width:340px;
+    border-radius:16px;
+    overflow:hidden;
+    background:#1c1c1c;
+    box-shadow:0 20px 50px rgba(0,0,0,.7);
+  }
+  .modal-image{
+    height:180px;
+    background:linear-gradient(135deg,#7dd3f0,#c98cf0 60%,#f0a83c);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    overflow:hidden;
+  }
+  .modal-emoji{font-size:88px;}
+  .coin{position:absolute; font-size:22px;}
+  .coin.c1{top:16px; left:22px;}
+  .coin.c2{bottom:18px; right:26px;}
+  .coin.c3{top:28px; right:44px;}
+  .modal-body{padding:26px 22px 24px; text-align:center;}
+  .modal-text{font-size:15px; color:#ddd; line-height:1.5; margin-bottom:22px;}
+  .modal-text b{color:var(--red); font-size:17px;}
+  .modal-confirm{
+    background:var(--accent);
+    color:#fff;
+    font-weight:700;
+    font-size:15px;
+    padding:12px;
+    border-radius:8px;
+    cursor:pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="preview-toggle">
+  <span>配置预览：返水领取模式（非客户端真实控件，仅用于对比两种后台配置）</span>
+  <div class="seg">
+    <button type="button" class="seg-btn active" id="modeNextBtn" onclick="setRebateMode('next')">次日领取</button>
+    <button type="button" class="seg-btn" id="modeRealtimeBtn" onclick="setRebateMode('realtime')">实时领取</button>
+  </div>
+</div>
+
+<div class="frame">
+
+  <!-- ================= SCREEN A: Rebate 主页 ================= -->
+  <div class="screen active" id="screenA">
+    <div class="tabbar">
+      <div class="tab">Eventos</div>
+      <div class="tab active highlight">Rebate<span class="dot"></span><span class="tab-badge">Ajustado</span></div>
+      <div class="tab">VIP<span class="dot"></span></div>
+      <div class="tab">Código de Resgate</div>
+      <div class="tab highlight" onclick="openHistorico()">Histórico<span class="tab-badge">Ajustado</span></div>
+      <div class="tab">Pendente</div>
+    </div>
+
+    <div class="summary">
+      <div><span id="sumLabelA">Pode ser coletado hoje</span>：<b id="todaySummary">3,01</b></div>
+      <div><span id="sumLabelB">Disponível para coleta amanhã</span>：<b id="secondSummary">0,00</b></div>
+    </div>
+    <div class="summary-hint" id="summaryHint">* Rebate é liquidado em D+1: os valores de hoje referem-se às apostas de ontem.</div>
+
+    <div class="body">
+      <div class="rail">
+        <div class="type-btn selected" id="btnSlot" onclick="selectType('slot')">
+          <span class="icon">🎰</span>Slot
+        </div>
+        <div class="type-btn" id="btnCassino" onclick="selectType('cassino')">
+          <span class="icon">🃏</span>Cassino
+        </div>
+        <div class="action-btn btn-green" id="receberBtn" onclick="openReceberModal()">Receber</div>
+        <div class="action-btn btn-yellow" onclick="openHistorico()">Histórico</div>
+      </div>
+
+      <div class="list" id="providerList"></div>
+    </div>
+
+    <div class="bottomnav">
+      <div class="navitem"><span class="navicon">🏠</span>Inicio</div>
+      <div class="navitem promo"><span class="navicon">🎁</span>Promoção</div>
+      <div class="navitem center"><span class="navicon">👥</span></div>
+      <div class="navitem"><span class="navicon">💰</span>Saque</div>
+      <div class="navitem"><span class="navicon">👤</span>Perfil<span class="navreddot"></span></div>
+    </div>
+  </div>
+
+  <!-- ================= SCREEN B: 场馆详情 (Taxa de reembolso) ================= -->
+  <div class="screen" id="screenB">
+    <div class="detail-header">
+      <div class="back" onclick="goBack()">‹</div>
+      <div class="detail-title">Taxa de reembolso</div>
+    </div>
+
+    <div class="filters">
+      <div class="dropdown" id="ddType" onclick="toggleDropdown('type')">
+        <span id="ddTypeLabel">Slot</span><span class="arrow">▾</span>
+      </div>
+      <div class="dropdown" id="ddProv" onclick="toggleDropdown('prov')">
+        <span id="ddProvLabel">PG</span><span class="arrow">▾</span>
+      </div>
+      <div class="colhead"><span>Aposta</span><span>Taxa de&nbsp;reembolso</span></div>
+    </div>
+
+    <!-- type dropdown panel -->
+    <div class="dropdown-panel" id="panelType" style="left:16px;">
+      <div class="dp-simple">
+        <div class="dp-opt sel" data-val="slot" onclick="pickType(this,'slot')">Slot</div>
+        <div class="dp-opt" data-val="esportes" onclick="pickType(this,'esportes')">Esportes</div>
+      </div>
+    </div>
+
+    <!-- provider dropdown panel -->
+    <div class="dropdown-panel" id="panelProv" style="left:110px;">
+      <div class="dp-grid" id="provGrid"></div>
+    </div>
+
+    <table class="rebate-table" id="rebateTable">
+      <thead>
+        <tr><th style="text-align:left;padding-left:14px;">Modalidade</th><th>Fornecedor</th><th>Aposta</th><th>Taxa de reembolso</th></tr>
+      </thead>
+      <tbody id="rebateRows"></tbody>
+    </table>
+
+    <div class="empty-state" id="esportesHint">
+      <div class="empty-icon">📄<span class="search">🔍</span></div>
+      <div class="empty-text">Sem Registros</div>
+    </div>
+  </div>
+
+  <!-- ================= SCREEN C: Histórico ================= -->
+  <div class="screen" id="screenC">
+    <div class="tabbar">
+      <div class="tab" onclick="goBack()">Eventos</div>
+      <div class="tab highlight" onclick="goBack()">Rebate<span class="dot"></span><span class="tab-badge">Ajustado</span></div>
+      <div class="tab">VIP<span class="dot"></span></div>
+      <div class="tab">Código de Resgate</div>
+      <div class="tab active highlight">Histórico<span class="tab-badge">Ajustado</span></div>
+      <div class="tab">Pendente<span class="dot"></span></div>
+    </div>
+
+    <div class="hist-filter">
+      <div class="dropdown" id="ddDate" onclick="toggleDateDropdown()">
+        <span id="ddDateLabel">Hoje</span><span class="arrow">▾</span>
+      </div>
+      <div class="hist-bonus">Bônus <b id="histBonus">3,01</b></div>
+    </div>
+
+    <div class="dropdown-panel" id="panelDate" style="left:16px; top:96px;">
+      <div class="dp-grid2">
+        <div class="dp-cell2 sel" onclick="pickDate(this,'Hoje')">Hoje</div>
+        <div class="dp-cell2" onclick="pickDate(this,'Ontem')">Ontem</div>
+        <div class="dp-cell2" onclick="pickDate(this,'Últimos 7 Dias')">Últimos 7 Dias</div>
+        <div class="dp-cell2" onclick="pickDate(this,'Últimos 30 Dias')">Últimos 30 Dias</div>
+      </div>
+    </div>
+
+    <table class="rebate-table" id="histTable">
+      <thead>
+        <tr><th>Tempo</th><th>Nome do Evento</th><th>Evento de Recompensa</th><th>Fonte</th></tr>
+      </thead>
+      <tbody id="histRows"></tbody>
+    </table>
+    <div class="hist-loading" id="histLoading">Carregando…</div>
+    <div class="empty-state" id="histEmpty">
+      <div class="empty-icon">📄<span class="search">🔍</span></div>
+      <div class="empty-text">Sem Registros</div>
+    </div>
+
+    <div class="bottomnav">
+      <div class="navitem"><span class="navicon">🏠</span>Inicio</div>
+      <div class="navitem promo"><span class="navicon">🎁</span>Promoção</div>
+      <div class="navitem center"><span class="navicon">👥</span></div>
+      <div class="navitem"><span class="navicon">💰</span>Saque</div>
+      <div class="navitem"><span class="navicon">👤</span>Perfil<span class="navreddot"></span></div>
+    </div>
+  </div>
+
+  <div class="overlay-close" id="overlayClose" onclick="closeAllDropdowns()"></div>
+
+  <!-- ================= Receber Modal ================= -->
+  <div class="modal-overlay" id="receberModal">
+    <div class="modal-card">
+      <div class="modal-image">
+        <div class="modal-emoji">🐂</div>
+        <div class="coin c1">🪙</div>
+        <div class="coin c2">🪙</div>
+        <div class="coin c3">🪙</div>
+      </div>
+      <div class="modal-body">
+        <div class="modal-text">Parabéns por ganhar <b id="modalAmount">R$ 3,01</b> em fichas de bônus</div>
+        <div class="modal-confirm" onclick="confirmReceber()">Confirmar</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------------- data ---------------- */
+const slotProviders = [
+  {id:'pg', name:'PG', ic:'🎰', rate:'0,30%', aposta:45000},
+  {id:'tada', name:'TaTa', ic:'🀄', rate:'0,30%', aposta:0},
+  {id:'jdb', name:'JDB', ic:'🃏', rate:'0,30%', aposta:320000},
+  {id:'spribe', name:'Spribe', ic:'📈', rate:'0,20%', aposta:0},
+  {id:'pp', name:'PP', ic:'🐼', rate:'0,30%', aposta:0},
+  {id:'cq9', name:'CQ9', ic:'🀄', rate:'0,30%', aposta:0},
+  {id:'bao', name:'BAO', ic:'🎮', rate:'0,30%', aposta:0},
+  {id:'fc', name:'FC', ic:'🎲', rate:'0,30%', aposta:0},
+  {id:'ppo8', name:'PP08', ic:'🎯', rate:'0,30%', aposta:0},
+  {id:'play1', name:'PLAY', ic:'▶️', rate:'0,30%', aposta:0},
+  {id:'play2', name:'PLAY2', ic:'▶️', rate:'0,20%', aposta:0},
+  {id:'av', name:'AV', ic:'✈️', rate:'0,20%', aposta:0}
+];
+const cassinoProviders = [
+  {id:'cascade', name:'Cassino Ao Vivo', ic:'🎴', rate:'-', aposta:0}
+];
+const providerGrid = ['PG','Tada','JDB','Spribe','PP','CP','G759','FaChai','POPOK','PLAYSON','RUBYPLAY','inout','FASTSPIN','PANDA','TOPPLAYER','PLAYNGO','Betby'];
+const tiers = [
+  ['10.000.000,00','5,00%'],
+  ['5.000.000,00','3,00%'],
+  ['3.000.000,00','2,00%'],
+  ['1.000.000,00','1,20%'],
+  ['500.000,00','0,80%'],
+  ['100.000,00','0,50%'],
+  ['1,00','0,30%']
+];
+/* 距下一档 阶梯门槛（升序），用于场馆卡片进度条演示：
+   进度 = 当前投注额 ÷ 下一档所需投注额（封顶 100%）*/
+const tierThresholds = [1,100000,500000,1000000,3000000,5000000,10000000];
+function calcProgress(aposta){
+  for(let i=0;i<tierThresholds.length;i++){
+    if(aposta < tierThresholds[i]){
+      return Math.min(100, (aposta/tierThresholds[i])*100);
+    }
+  }
+  return 100;
+}
+function fmtBRL(n){
+  return (n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function rateToDecimal(rateStr){
+  if(!rateStr || rateStr==='-') return 0;
+  return parseFloat(rateStr.replace('%','').replace(',','.'))/100;
+}
+
+let currentGameType = 'slot';   // slot | cassino  (left rail on screen A)
+let currentModalidade = 'slot'; // slot | esportes (dropdown on screen B)
+let currentProvider = 'PG';
+
+/* ---------------- Screen A ---------------- */
+function renderList(){
+  const list = document.getElementById('providerList');
+  const data = currentGameType === 'slot' ? slotProviders : cassinoProviders;
+  if(data.length === 0){
+    list.innerHTML = `
+      <div class="empty-state show" style="padding:70px 0 20px;">
+        <div class="empty-icon">📄<span class="search">🔍</span></div>
+        <div class="empty-text">Sem Registros</div>
+      </div>`;
+    return;
+  }
+  list.innerHTML = data.map(p => {
+    const aposta = p.aposta || 0;
+    const progress = calcProgress(aposta);
+    const coletavel = aposta * rateToDecimal(p.rate);
+    return `
+    <div class="prov-card" onclick="openDetail('${p.id}','${p.name}')">
+      <div class="prov-top">
+        <div class="prov-name"><span class="ic">${p.ic}</span>${p.name}</div>
+        <div class="prov-mid">Aposta&nbsp; ${fmtBRL(aposta)}</div>
+      </div>
+      <div class="prov-second">
+        <div class="prov-progress">
+          <div class="prov-progress-fill" style="width:${progress}%"></div>
+          <span class="prov-progress-label">Aposte 1,00 para receber <span class="rate">${p.rate}</span></span>
+        </div>
+        <span class="prov-coletavel">Coletável&nbsp;${fmtBRL(coletavel)} <span class="chev">›</span></span>
+      </div>
+    </div>
+  `;
+  }).join('');
+}
+function selectType(type){
+  currentGameType = type;
+  document.getElementById('btnSlot').classList.toggle('selected', type==='slot');
+  document.getElementById('btnCassino').classList.toggle('selected', type==='cassino');
+  renderList();
+}
+renderList();
+
+/* ---------------- navigation ---------------- */
+function openDetail(id,name){
+  currentModalidade = 'slot';
+  currentProvider = name;
+  document.getElementById('ddTypeLabel').textContent = 'Slot';
+  document.getElementById('ddProvLabel').textContent = name;
+  buildProviderGrid();
+  buildTable();
+  closeAllDropdowns();
+  show('screenB');
+}
+function goBack(){ closeAllDropdowns(); show('screenA'); }
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ---------------- Screen B: dropdowns ---------------- */
+function toggleDropdown(which){
+  const panelType = document.getElementById('panelType');
+  const panelProv = document.getElementById('panelProv');
+  const ddType = document.getElementById('ddType');
+  const ddProv = document.getElementById('ddProv');
+  if(which==='type'){
+    const willOpen = !panelType.classList.contains('show');
+    closeAllDropdowns();
+    if(willOpen){ panelType.classList.add('show'); ddType.classList.add('open'); overlayShow(); }
+  } else {
+    const willOpen = !panelProv.classList.contains('show');
+    closeAllDropdowns();
+    if(willOpen){ panelProv.classList.add('show'); ddProv.classList.add('open'); overlayShow(); }
+  }
+}
+function overlayShow(){ document.getElementById('overlayClose').classList.add('show'); }
+function closeAllDropdowns(){
+  document.querySelectorAll('.dropdown-panel').forEach(p=>p.classList.remove('show'));
+  document.querySelectorAll('.dropdown').forEach(d=>d.classList.remove('open'));
+  document.getElementById('overlayClose').classList.remove('show');
+}
+function pickType(el,val){
+  document.querySelectorAll('#panelType .dp-opt').forEach(o=>o.classList.remove('sel'));
+  el.classList.add('sel');
+  currentModalidade = val;
+  document.getElementById('ddTypeLabel').textContent = val==='slot' ? 'Slot' : 'Esportes';
+  buildTable();
+  closeAllDropdowns();
+}
+function buildProviderGrid(){
+  const grid = document.getElementById('provGrid');
+  grid.innerHTML = providerGrid.map(name => `
+    <div class="dp-cell ${name===currentProvider?'sel':''}" onclick="pickProvider(this,'${name}')">${name}</div>
+  `).join('');
+}
+function pickProvider(el,name){
+  document.querySelectorAll('#provGrid .dp-cell').forEach(o=>o.classList.remove('sel'));
+  el.classList.add('sel');
+  currentProvider = name;
+  document.getElementById('ddProvLabel').textContent = name;
+  buildTable();
+  closeAllDropdowns();
+}
+function buildTable(){
+  const tbody = document.getElementById('rebateRows');
+  const table = document.getElementById('rebateTable');
+  const hint = document.getElementById('esportesHint');
+  if(currentModalidade === 'esportes'){
+    table.style.display='none';
+    hint.classList.add('show');
+    return;
+  }
+  table.style.display='table';
+  hint.classList.remove('show');
+  tbody.innerHTML = tiers.map(t => `
+    <tr>
+      <td style="text-align:left;padding-left:14px;">Slot</td>
+      <td>${currentProvider}</td>
+      <td>${t[0]}</td>
+      <td style="color:#f2c744;">${t[1]}</td>
+    </tr>
+  `).join('');
+}
+
+/* ---------------- 配置：返水领取模式 ----------------
+   本次新增：客户端按后台配置二选一渲染，玩家侧不可自行切换，此处切换按钮仅供评审预览对比。
+   - next（次日领取）：Pode ser coletado hoje / Disponível para coleta amanhã，
+     当日额度为固定批次金额，领取后归零，次日才会出现新额度。
+   - realtime（实时领取，本次新增）：Total gerado hoje（今日累计产生的返水总额）/
+     Já coletado hoje（今日已通过 Receber 领取到账的金额）；可领取余额 = 产生总额 − 已领取。
+     打开 Receber 时按当前余额快照展示并锁定，即"进入领取页有多少显示多少，领取多少"。 */
+let rebateMode = 'next';
+let nextModeAmount = 3.01;          // 次日领取模式：当日固定批次额度
+let realtimeGenerated = 88.00;      // 实时领取模式：今日累计产生的返水总额（演示数据）
+let realtimeCollected = 20.00;      // 实时领取模式：今日已领取金额（演示数据）
+let modalSnapshot = 0;              // 打开 Receber 弹窗时锁定的快照金额
+
+function getPendingAmount(){
+  return rebateMode === 'next'
+    ? nextModeAmount
+    : Math.max(0, realtimeGenerated - realtimeCollected);
+}
+function setRebateMode(mode){
+  rebateMode = mode;
+  document.getElementById('modeNextBtn').classList.toggle('active', mode==='next');
+  document.getElementById('modeRealtimeBtn').classList.toggle('active', mode==='realtime');
+  renderSummary();
+}
+function renderSummary(){
+  const labelA = document.getElementById('sumLabelA');
+  const labelB = document.getElementById('sumLabelB');
+  const valA = document.getElementById('todaySummary');
+  const valB = document.getElementById('secondSummary');
+  const hint = document.getElementById('summaryHint');
+  if(rebateMode === 'next'){
+    labelA.textContent = 'Pode ser coletado hoje';
+    labelB.textContent = 'Disponível para coleta amanhã';
+    valA.textContent = fmtBRL(nextModeAmount);
+    valB.textContent = '0,00';
+    hint.textContent = '* Rebate é liquidado em D+1: os valores de hoje referem-se às apostas de ontem.';
+  } else {
+    labelA.textContent = 'Total gerado hoje';
+    labelB.textContent = 'Já coletado hoje';
+    valA.textContent = fmtBRL(realtimeGenerated);
+    valB.textContent = fmtBRL(realtimeCollected);
+    hint.textContent = '* Cálculo em tempo real: o valor exibido é o valor no momento em que você abre a coleta.';
+  }
+  updateReceberBtn();
+}
+
+/* ---------------- Receber modal ---------------- */
+function updateReceberBtn(){
+  const btn = document.getElementById('receberBtn');
+  btn.classList.toggle('disabled', getPendingAmount() <= 0);
+}
+function openReceberModal(){
+  modalSnapshot = getPendingAmount();
+  document.getElementById('modalAmount').textContent = 'R$ ' + fmtBRL(modalSnapshot);
+  document.getElementById('receberModal').classList.add('show');
+}
+function confirmReceber(){
+  if(rebateMode === 'next'){
+    nextModeAmount = 0;
+  } else {
+    realtimeCollected += modalSnapshot;
+  }
+  document.getElementById('receberModal').classList.remove('show');
+  renderSummary();
+}
+renderSummary();
+
+/* ---------------- Screen C: Historico ----------------
+   已确认：场馆 / 流水排序由后端接口返回顺序决定，前端不做二次排序，直接按接口顺序渲染。
+   已确认：切换时间范围会重新请求接口（非前端本地过滤），此处用 historyDataByPeriod 模拟不同周期
+   接口各自返回的数据；「Ontem」周期演示为空数据，对应统一的 Sem Registros 缺省页。 */
+const historyDataByPeriod = {
+  'Hoje': [
+    {time:'07/14 04:51', name:'Cashback de Apostas', value:'0,15', source:'Rebate'},
+    {time:'07/14 04:51', name:'Cashback de Apostas', value:'2,30', source:'Rebate'},
+    {time:'07/14 04:51', name:'Cashback de Apostas', value:'0,56', source:'Rebate'}
+  ],
+  'Ontem': [],
+  'Últimos 7 Dias': [
+    {time:'07/14 04:51', name:'Cashback de Apostas', value:'0,15', source:'Rebate'},
+    {time:'07/14 04:51', name:'Cashback de Apostas', value:'2,30', source:'Rebate'},
+    {time:'07/14 04:51', name:'Cashback de Apostas', value:'0,56', source:'Rebate'}
+  ],
+  'Últimos 30 Dias': [
+    {time:'07/14 04:51', name:'Cashback de Apostas', value:'0,15', source:'Rebate'},
+    {time:'07/14 04:51', name:'Cashback de Apostas', value:'2,30', source:'Rebate'},
+    {time:'07/14 04:51', name:'Cashback de Apostas', value:'0,56', source:'Rebate'}
+  ]
+};
+let currentPeriod = 'Hoje';
+function openHistorico(){
+  closeAllDropdowns();
+  buildHistRows();
+  show('screenC');
+}
+function sumBRL(rows){
+  const total = rows.reduce((s,h) => s + parseFloat(h.value.replace(',','.')), 0);
+  return fmtBRL(total);
+}
+function buildHistRows(){
+  const rows = historyDataByPeriod[currentPeriod] || [];
+  const table = document.getElementById('histTable');
+  const empty = document.getElementById('histEmpty');
+  document.getElementById('histBonus').textContent = sumBRL(rows);
+  if(rows.length === 0){
+    table.style.display = 'none';
+    empty.classList.add('show');
+    return;
+  }
+  table.style.display = 'table';
+  empty.classList.remove('show');
+  document.getElementById('histRows').innerHTML = rows.map(h => `
+    <tr>
+      <td>${h.time}</td>
+      <td>${h.name}</td>
+      <td style="color:#f2c744;">${h.value}</td>
+      <td>${h.source}</td>
+    </tr>
+  `).join('');
+}
+function toggleDateDropdown(){
+  const panel = document.getElementById('panelDate');
+  const dd = document.getElementById('ddDate');
+  const willOpen = !panel.classList.contains('show');
+  closeAllDropdowns();
+  if(willOpen){ panel.classList.add('show'); dd.classList.add('open'); overlayShow(); }
+}
+function pickDate(el,label){
+  document.querySelectorAll('#panelDate .dp-cell2').forEach(o=>o.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('ddDateLabel').textContent = label;
+  currentPeriod = label;
+  closeAllDropdowns();
+  // 已确认：切换时间范围会重新请求接口，而非前端本地过滤 —— 以下用短暂 loading 模拟一次真实请求
+  const table = document.getElementById('histTable');
+  const empty = document.getElementById('histEmpty');
+  const loading = document.getElementById('histLoading');
+  table.style.display = 'none';
+  empty.classList.remove('show');
+  loading.classList.add('show');
+  setTimeout(() => {
+    buildHistRows(); // 实际项目中此处应替换为按 label 重新请求接口返回的数据
+    loading.classList.remove('show');
+  }, 500);
+}
+</script>
+</body>
+</html>

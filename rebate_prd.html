@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>返水（Rebate）模块 PRD</title>
+<style>
+  :root{
+    --ink:#1f2328;
+    --sub:#57606a;
+    --line:#d8dee4;
+    --accent:#d97706;
+    --accent-bg:#fff7ed;
+    --code-bg:#f6f8fa;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    padding:48px 64px 80px;
+    font-family:"Segoe UI","PingFang SC","Microsoft YaHei",Helvetica,Arial,sans-serif;
+    color:var(--ink);
+    line-height:1.7;
+    background:#fff;
+    max-width:900px;
+    margin:0 auto;
+  }
+  h1{font-size:26px; margin:0 0 6px;}
+  h2{
+    font-size:19px;
+    margin:40px 0 14px;
+    padding-bottom:8px;
+    border-bottom:2px solid var(--ink);
+  }
+  h3{font-size:16px; margin:26px 0 10px; color:var(--ink);}
+  h4{font-size:14px; margin:18px 0 8px; color:var(--sub);}
+  p{margin:0 0 12px;}
+  .subtitle{color:var(--sub); font-size:14px; margin-bottom:28px;}
+  .meta-table{width:100%; border-collapse:collapse; margin-bottom:30px; font-size:13px;}
+  .meta-table td{padding:8px 12px; border:1px solid var(--line);}
+  .meta-table td:first-child{background:var(--code-bg); width:120px; color:var(--sub); font-weight:600;}
+  table{width:100%; border-collapse:collapse; margin:14px 0 20px; font-size:13.5px;}
+  th, td{border:1px solid var(--line); padding:9px 12px; text-align:left; vertical-align:top;}
+  th{background:var(--code-bg); font-weight:600; color:var(--ink);}
+  tr:nth-child(even) td{background:#fafbfc;}
+  .tag{
+    display:inline-block;
+    font-size:11px;
+    padding:2px 8px;
+    border-radius:10px;
+    background:var(--accent-bg);
+    color:var(--accent);
+    font-weight:600;
+    margin-right:6px;
+  }
+  .note{
+    background:var(--accent-bg);
+    border-left:3px solid var(--accent);
+    padding:10px 14px;
+    font-size:13.5px;
+    margin:14px 0;
+    color:#7c3f00;
+  }
+  .flow{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:8px;
+    margin:16px 0 22px;
+    font-size:13px;
+  }
+  .flow .step{
+    background:var(--code-bg);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:8px 12px;
+    white-space:nowrap;
+  }
+  .flow .arrow{color:var(--sub);}
+  code{
+    background:var(--code-bg);
+    padding:1px 5px;
+    border-radius:4px;
+    font-size:12.5px;
+  }
+  ul, ol{margin:0 0 14px; padding-left:22px;}
+  li{margin-bottom:4px;}
+  .toc{
+    background:var(--code-bg);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:16px 22px;
+    font-size:13.5px;
+    margin-bottom:30px;
+  }
+  .toc a{color:var(--ink); text-decoration:none;}
+  .toc a:hover{text-decoration:underline;}
+  .toc ol{margin:0; padding-left:20px;}
+  footer{margin-top:60px; padding-top:16px; border-top:1px solid var(--line); font-size:12px; color:var(--sub);}
+</style>
+</head>
+<body>
+
+<h1>返水（Rebate）模块 PRD</h1>
+<div class="subtitle">投注返水 / 领取 / 历史记录 —— 需求与交互说明文档</div>
+
+<table class="meta-table">
+  <tr><td>文档版本</td><td>V1.0</td></tr>
+  <tr><td>更新日期</td><td>2026-07-14</td></tr>
+  <tr><td>负责模块</td><td>Rebate（返水）</td></tr>
+  <tr><td>关联端</td><td>App 客户端（葡语 pt-BR 站点）</td></tr>
+  <tr><td>关联原型</td><td>rebate_prototype.html（HTML 可点击交互原型，与本文档配套）</td></tr>
+  <tr><td>状态</td><td>已定稿：全部待确认事项已在第十一节收口，可作为开发排期与联调依据</td></tr>
+</table>
+
+<div class="toc">
+  <ol>
+    <li><a href="#bg">背景与目标</a></li>
+    <li><a href="#scope">功能范围</a></li>
+    <li><a href="#glossary">术语说明</a></li>
+    <li><a href="#flow">页面流程</a></li>
+    <li><a href="#p1">页面一：返水首页</a></li>
+    <li><a href="#p2">页面二：场馆返水详情页</a></li>
+    <li><a href="#p3">交互组件：领取（Receber）确认弹窗</a></li>
+    <li><a href="#p4">页面三：历史记录页（Histórico）</a></li>
+    <li><a href="#visual">视觉规范补充说明</a></li>
+    <li><a href="#edge">异常与边界状态</a></li>
+    <li><a href="#open">待确认事项</a></li>
+  </ol>
+</div>
+
+<h2 id="bg">一、背景与目标</h2>
+<p>
+返水（Rebate）是面向玩家的投注返现激励功能：玩家在各游戏场馆（Slot、Cassino 等）产生投注后，系统按场馆设定的阶梯比例计算可返还金额，玩家可在返水页面查看当日/次日可领取额度，按场馆查看具体返水比例规则，并将已产生的返水一键领取到主账户余额。本次迭代在原有 Slot 场馆返水列表基础上，补充了 Cassino 游戏类型入口、场馆卡片的返水进度可视化、领取结果确认弹窗、以及历史记录查询页，目标是让玩家更清晰地感知"投入-进度-可领取-已领取"这条链路，提升返水功能的可用性与领取转化率。
+</p>
+
+<h2 id="scope">二、功能范围</h2>
+<table>
+  <tr><th style="width:120px;">范围</th><th>内容</th></tr>
+  <tr>
+    <td>本次新增 / 调整</td>
+    <td>
+      Cassino 游戏类型入口；场馆卡片返水进度条（底纹样式）；点击 Receber 后的领取确认弹窗；Histórico 历史记录页（含时间范围筛选）；顶部 Tab 栏中 Rebate / Histórico 的改动标识；额度汇总条新增「返水领取模式配置」（次日领取 / 实时领取二选一，见 5.1 节）。
+    </td>
+  </tr>
+  <tr>
+    <td>沿用原有设计</td>
+    <td>顶部一级 Tab 栏（Eventos / Rebate / VIP / Código de Resgate / Histórico / Pendente）；场馆返水详情页（Taxa de reembolso）及其筛选下拉；底部主导航。</td>
+  </tr>
+  <tr>
+    <td>不在本次范围</td>
+    <td>Eventos、VIP、Código de Resgate、Pendente 等其他一级 Tab 页面的功能设计；具体返水比例的计算与结算后端逻辑；Esportes（体育）返水规则的详细定义。</td>
+  </tr>
+</table>
+
+<h2 id="glossary">三、术语说明</h2>
+<table>
+  <tr><th style="width:220px;">葡语 UI 文案</th><th>含义</th></tr>
+  <tr><td>Rebate</td><td>返水（本模块）</td></tr>
+  <tr><td>Aposta</td><td>投注额</td></tr>
+  <tr><td>Taxa de reembolso</td><td>返水比例 / 返现费率</td></tr>
+  <tr><td>Coletável</td><td>当前可领取金额</td></tr>
+  <tr><td>Pode ser coletado hoje</td><td>今日可领取总额（「次日领取」配置模式使用）</td></tr>
+  <tr><td>Disponível para coleta amanhã</td><td>次日预计可领取总额（「次日领取」配置模式使用）</td></tr>
+  <tr><td><span class="tag">本次新增</span> Total gerado hoje</td><td>今日累计产生的返水总额（「实时领取」配置模式使用）</td></tr>
+  <tr><td><span class="tag">本次新增</span> Já coletado hoje</td><td>今日已通过 Receber 领取到账的金额（「实时领取」配置模式使用）</td></tr>
+  <tr><td>Receber</td><td>领取（操作按钮）</td></tr>
+  <tr><td>Histórico</td><td>历史记录</td></tr>
+  <tr><td>Modalidade</td><td>玩法大类（如 Slot / Esportes）</td></tr>
+  <tr><td>Fornecedor</td><td>游戏场馆 / 供应商（如 PG、JDB）</td></tr>
+  <tr><td>Bônus</td><td>已领取到账户的返水奖金累计值</td></tr>
+</table>
+
+<h2 id="flow">四、页面流程</h2>
+<div class="flow">
+  <div class="step">返水首页（Rebate）</div>
+  <span class="arrow">→ 点击场馆卡片 →</span>
+  <div class="step">场馆返水详情页（Taxa de reembolso）</div>
+</div>
+<div class="flow">
+  <div class="step">返水首页（Rebate）</div>
+  <span class="arrow">→ 点击 Receber →</span>
+  <div class="step">领取确认弹窗</div>
+  <span class="arrow">→ 点击 Confirmar →</span>
+  <div class="step">回到返水首页，今日可领取额清零</div>
+</div>
+<div class="flow">
+  <div class="step">返水首页（Rebate）</div>
+  <span class="arrow">→ 点击左侧 Histórico 按钮 / 顶部 Histórico Tab →</span>
+  <div class="step">历史记录页（Histórico）</div>
+  <span class="arrow">→ 点击顶部 Rebate Tab →</span>
+  <div class="step">回到返水首页</div>
+</div>
+
+<h2 id="p1">五、页面一：返水首页</h2>
+
+<h3>5.1 页面结构</h3>
+<p>页面自上而下分为四个区域：顶部一级 Tab 栏、返水额度汇总条、主体区（左侧游戏类型 / 操作栏 + 右侧场馆列表）、底部主导航。</p>
+
+<table>
+  <tr><th style="width:160px;">区块</th><th>元素</th><th>说明</th></tr>
+  <tr>
+    <td rowspan="2">顶部 Tab 栏</td>
+    <td>一级 Tab</td>
+    <td>Eventos / Rebate / VIP / Código de Resgate / Histórico / Pendente，横向可滚动；当前页面 Rebate 为选中态（黄色下划线 + 加粗）。</td>
+  </tr>
+  <tr>
+    <td>Tab 标识</td>
+    <td>Rebate、VIP 携带红色小圆点提示（新消息 / 待处理提示）；<strong>本次迭代改动范围</strong>：Rebate、Histórico 两个 Tab 叠加橙色底纹高亮 + 红色「Ajustado」角标，用于区分本轮调整涉及的入口，验收后可移除该标识。</td>
+  </tr>
+  <tr>
+    <td><span class="tag">本次新增</span> 额度汇总条</td>
+    <td>两组数值 + 说明文案</td>
+    <td>
+      数值为玩家对所有场馆返水的汇总（非单一场馆数值）。<strong>本次新增：</strong>该区域按后台配置的「返水领取模式」二选一渲染，玩家侧无法自行切换，两种模式互斥：
+      <table style="margin-top:10px;">
+        <tr><th style="width:110px;">配置模式</th><th>字段一</th><th>字段二</th><th>内部说明文案（不展示给玩家）</th><th>Receber 逻辑</th></tr>
+        <tr>
+          <td>次日领取</td>
+          <td>Pode ser coletado hoje（今日可领取）</td>
+          <td>Disponível para coleta amanhã（次日预计可领取）</td>
+          <td>* Rebate é liquidado em D+1: os valores de hoje referem-se às apostas de ontem.</td>
+          <td>当日额度为固定批次金额，领取后归零，新额度需等次日结算才会出现。</td>
+        </tr>
+        <tr>
+          <td>实时领取</td>
+          <td>Total gerado hoje（今日累计产生的返水总额）</td>
+          <td>Já coletado hoje（今日已领取金额）</td>
+          <td>* Cálculo em tempo real: o valor exibido é o valor no momento em que você abre a coleta.</td>
+          <td>可领取余额 = 产生总额 − 已领取；打开 Receber 时按当前余额快照锁定展示，领取后「已领取」增加、余额相应减少。</td>
+        </tr>
+      </table>
+      <strong>已确认：</strong>上表中的说明文案仅作为内部逻辑备注，<strong>不在客户端界面展示给玩家</strong>；原型中对应元素已通过 <code>display:none</code> 隐藏，保留结构与文案供内部核对，不做界面呈现。原型页顶部提供了「次日领取 / 实时领取」预览切换按钮，仅用于评审对比两种配置效果，非客户端正式功能。
+    </td>
+  </tr>
+  <tr>
+    <td rowspan="4">左侧操作栏</td>
+    <td>游戏类型按钮（Slot / <span class="tag">新增</span> Cassino）</td>
+    <td>纵向排列的图标 + 文字按钮，当前选中项高亮描边；点击切换后右侧场馆列表刷新为该类型下的场馆数据。</td>
+  </tr>
+  <tr>
+    <td>Receber（绿色按钮）</td>
+    <td>点击触发领取确认弹窗（见第七节）。</td>
+  </tr>
+  <tr>
+    <td>Histórico（黄色按钮）</td>
+    <td>点击进入历史记录页（见第八节），与顶部 Histórico Tab 效果一致。</td>
+  </tr>
+  <tr>
+    <td>（占位）</td>
+    <td>预留区域，若后续新增游戏类型（如 Esportes）可在此扩展按钮。</td>
+  </tr>
+  <tr>
+    <td rowspan="3">右侧场馆列表</td>
+    <td>场馆卡片</td>
+    <td>纵向可滚动列表，每张卡片对应一个场馆，可点击进入该场馆的返水详情页。</td>
+  </tr>
+  <tr>
+    <td>排序规则（已确认）</td>
+    <td>场馆列表排序由后台接口控制，按接口返回顺序直接渲染，前端不做二次排序。</td>
+  </tr>
+  <tr>
+    <td>空状态（已确认）</td>
+    <td>当所选游戏类型下场馆列表为空（如 Cassino 无可用场馆）时，展示统一的缺省页：灰度文档 + 放大镜图标，下方文案「Sem Registros」，居中显示（与第八节历史记录页空状态样式一致）。</td>
+  </tr>
+</table>
+
+<h3>5.2 场馆卡片字段说明</h3>
+<table>
+  <tr><th style="width:160px;">字段</th><th>说明</th></tr>
+  <tr><td>场馆图标 / 名称</td><td>如 PG、TaTa、JDB、Spribe、PP、CQ9、BAO、FC 等（Slot 类型示例场馆，实际以接口返回为准）。</td></tr>
+  <tr><td>Aposta</td><td>玩家在该场馆的累计投注额，按自然日实时计算，次日 00:00 重置清零重新累计。</td></tr>
+  <tr><td>Taxa de reembolso</td><td>玩家当前已产生的综合返水比例（示例默认 0,00%，随投注增加而变化）。</td></tr>
+  <tr>
+    <td><span class="tag">本次新增</span> 返水进度条</td>
+    <td>
+      胶囊形进度条，底纹为深灰色（<code>#3a3a3a</code>），文案「Aposte 1,00 para receber X%」直接叠加显示在进度条底纹之上；进度条填充部分（橙黄色渐变）随玩家投注推进逐步填充。<br/>
+      <strong>计算公式（已确认）：距下一档</strong> —— 填充比例 = 当前投注额 ÷ 下一档所需投注额（阶梯门槛沿用第六节场馆详情页的投注门槛表：1,00 / 100.000,00 / 500.000,00 / 1.000.000,00 / 3.000.000,00 / 5.000.000,00 / 10.000.000,00），达到或超过最高档时封顶显示 100%。当 Aposta 为 0 时填充为 0%，仅显示底纹。原型中 PG（45.000,00 / 45%）、JDB（320.000,00 / 64%）两张卡片已按该公式演示非零进度状态，其余卡片保持 0% 占位。
+    </td>
+  </tr>
+  <tr><td>Coletável</td><td>该场馆当前可领取的返水金额，原型中按「Aposta × Taxa de reembolso」估算展示，实际以接口返回为准。</td></tr>
+  <tr><td>Chevron（›）</td><td>点击整张卡片或箭头，跳转至该场馆的返水详情页（Taxa de reembolso）。</td></tr>
+</table>
+
+<div class="note">
+  场馆列表排序规则、Aposta 的统计周期均已在第十一节确认（详见 11.1）；各场馆真实的阶梯门槛与比例数值由后端接口写入，本文档及原型中的数值仅为演示占位。
+</div>
+
+<h2 id="p2">六、页面二：场馆返水详情页（Taxa de reembolso）</h2>
+<p>由返水首页点击任意场馆卡片进入，用于查看该场馆完整的投注阶梯与对应返水比例规则。</p>
+<table>
+  <tr><th style="width:160px;">元素</th><th>说明</th></tr>
+  <tr><td>返回按钮</td><td>左上角「‹」，点击返回返水首页。</td></tr>
+  <tr><td>标题</td><td>固定文案「Taxa de reembolso」。</td></tr>
+  <tr>
+    <td>筛选下拉一：Modalidade</td>
+    <td>可选项 Slot / Esportes；默认取值为进入前所选的游戏类型（Slot）。切换为 Esportes 时，当前无阶梯数据，展示统一缺省页（见下方"空状态"说明）。</td>
+  </tr>
+  <tr>
+    <td>空状态（已确认）</td>
+    <td>Esportes 暂无阶梯数据时，展示统一的缺省页：灰度文档 + 放大镜图标，下方文案「Sem Registros」，居中显示；与场馆列表、历史记录的空状态样式保持一致。</td>
+  </tr>
+  <tr>
+    <td>筛选下拉二：Fornecedor</td>
+    <td>展示为场馆宫格选择器（示例 17 家场馆：PG、Tada、JDB、Spribe、PP、CP、G759、FaChai、POPOK、PLAYSON、RUBYPLAY、inout、FASTSPIN、PANDA、TOPPLAYER、PLAYNGO、Betby），当前选中项高亮；切换后下方表格数据联动刷新。</td>
+  </tr>
+  <tr>
+    <td>阶梯表格</td>
+    <td>
+      列：Modalidade / Fornecedor / Aposta（投注门槛）/ Taxa de reembolso（对应比例）。示例阶梯（数值为占位）：<br/>
+      10.000.000,00 → 5,00%；5.000.000,00 → 3,00%；3.000.000,00 → 2,00%；1.000.000,00 → 1,20%；500.000,00 → 0,80%；100.000,00 → 0,50%；1,00 → 0,30%。<br/>
+      <strong>已确认：</strong>各场馆真实的阶梯门槛与比例数值由后端接口写入，前端仅负责按接口返回渲染，不做本地硬编码。
+    </td>
+  </tr>
+</table>
+
+<h2 id="p3">七、交互组件：领取（Receber）确认弹窗</h2>
+<p><span class="tag">本次新增</span> 玩家在返水首页点击绿色 Receber 按钮后触发，用于二次确认领取动作并展示领取结果。</p>
+<table>
+  <tr><th style="width:160px;">元素</th><th>说明</th></tr>
+  <tr><td>触发方式</td><td>点击返水首页左侧「Receber」按钮。</td></tr>
+  <tr><td>顶部插画区</td><td>营销风格插画（示意为吉祥物 + 金币元素），用于强化领取成功的正反馈氛围，具体素材由视觉设计提供。</td></tr>
+  <tr><td>提示文案</td><td>「Parabéns por ganhar <strong>R$ X,XX</strong> em fichas de bônus」，金额取自当前「Pode ser coletado hoje」的汇总值。</td></tr>
+  <tr>
+    <td>结算周期（已确认，修正）</td>
+    <td>返水为<strong>当日实时计算、手动领取</strong>，并非隔日（D+1）结算（此前版本描述有误，已修正）。玩家的返水额度随投注实时累计；打开 Receber 领取入口时，按<strong>当前快照金额</strong>展示 —— 即"进入领取页有多少显示多少，领取多少"：弹窗打开瞬间读取一次当前可领取总额并锁定展示，点击 Confirmar 即按该快照金额领取。若打开弹窗后、点击 Confirmar 前又产生了新的返水，新增部分不计入本次领取，会保留在「Pode ser coletado hoje」中供下次领取，不会丢失，以此方式规避实时计算下的并发冲突。</td>
+  </tr>
+  <tr><td>Confirmar 按钮</td><td>点击后：① 关闭弹窗；② 将该笔（快照）金额计入玩家主账户余额（需后端接口支持）；③ 返水首页「Pode ser coletado hoje」按领取金额扣减（若领取期间无新增，则归零）；④ 对应场馆卡片的 Coletável 应同步扣减（原型中暂未做单卡片联动，需前端实现时补充）。</td></tr>
+  <tr><td>无可领取金额时（已确认）</td><td>若「Pode ser coletado hoje」为 0,00，Receber 按钮<strong>置灰禁用</strong>、不可点击（原型已实现：领取成功后按钮自动变灰）。</td></tr>
+</table>
+
+<h2 id="p4">八、页面三：历史记录页（Histórico）</h2>
+<p><span class="tag">本次新增</span> 用于查询玩家历史返水领取流水，入口为返水首页左侧「Histórico」按钮或顶部「Histórico」一级 Tab。</p>
+<table>
+  <tr><th style="width:160px;">元素</th><th>说明</th></tr>
+  <tr><td>顶部 Tab 栏</td><td>与返水首页一致，当前 Histórico 为选中态；点击「Rebate」Tab 可返回返水首页。</td></tr>
+  <tr>
+    <td>时间范围筛选</td>
+    <td>
+      左上角下拉按钮，默认「Hoje」，点击展开二列宫格选项：Hoje / Ontem / Últimos 7 Dias / Últimos 30 Dias。选中后按钮文案更新为所选项。<br/>
+      <strong>已确认：</strong>切换时间范围时<strong>重新请求接口</strong>获取对应周期的数据，而非前端本地过滤已加载的数据。原型中已用短暂的「Carregando…」加载态模拟这一请求过程（实际接口对接时替换为真实请求）。
+    </td>
+  </tr>
+  <tr><td>Bônus 汇总</td><td>右上角展示玩家在当前筛选周期内累计已领取的返水奖金总额。</td></tr>
+  <tr>
+    <td>流水表格</td>
+    <td>列：Tempo（领取时间）/ Nome do Evento（事件名称，如 Cashback de Apostas）/ Evento de Recompensa（本笔到账金额）/ Fonte（来源，固定为 Rebate）。</td>
+  </tr>
+  <tr><td>空状态（已确认）</td><td>所选时间范围内无记录时（原型以「Ontem」为演示），展示统一缺省页：灰度文档 + 放大镜图标，下方文案「Sem Registros」，居中显示；与返水首页场馆列表、场馆详情页 Esportes 空状态样式保持一致。</td></tr>
+</table>
+
+<h2 id="visual">九、视觉规范补充说明</h2>
+<table>
+  <tr><th style="width:200px;">规范项</th><th>说明</th></tr>
+  <tr><td>整体风格</td><td>深色主题（背景 <code>#141414</code>），主文本白色 / 浅灰，强调色为橙黄渐变（<code>#f0a83c → #f2c744</code>），用于比例数值、进度条填充、选中态。</td></tr>
+  <tr><td>操作按钮</td><td>Receber 为绿色实心按钮（确认 / 正向操作），Histórico 为黄色实心按钮（查询类操作），二者在左侧操作栏中层级并列。</td></tr>
+  <tr><td>进度条</td><td>胶囊形，高度约 20px，圆角与容器一致；底纹深灰，填充色为强调色渐变；文案叠加在进度条内，填充比例按"距下一档"公式计算，需保证填充区与底纹区文字对比度均可读。</td></tr>
+  <tr><td>Tab 改动标识</td><td>橙色半透明底纹 + 红色「Ajustado」角标。<strong>已确认：</strong>仅用于本轮内部评审阶段标识改动范围，不作为正式功能的"新功能提示"保留，正式上线前需移除。</td></tr>
+</table>
+
+<h2 id="edge">十、异常与边界状态</h2>
+<table>
+  <tr><th style="width:220px;">场景</th><th>预期表现</th></tr>
+  <tr><td>今日可领取额为 0</td><td><strong>已确认：</strong>Receber 按钮置灰禁用，不可点击。</td></tr>
+  <tr><td>Cassino 类型场馆列表为空</td><td><strong>已确认：</strong>展示统一缺省页「Sem Registros」（灰度文档 + 放大镜图标）。</td></tr>
+  <tr><td>Esportes 阶梯规则为空</td><td><strong>已确认：</strong>场馆详情页展示同一套「Sem Registros」缺省页。</td></tr>
+  <tr><td>历史记录所选周期无数据</td><td><strong>已确认：</strong>展示同一套「Sem Registros」缺省页（原型以「Ontem」周期演示）。</td></tr>
+  <tr><td>网络异常 / 接口失败</td><td>各列表页、弹窗的失败重试交互，待前端统一规范补充，不在本文档范围内定义。</td></tr>
+</table>
+
+<h2 id="open">十一、待确认事项</h2>
+
+<h3>11.1 已确认结论</h3>
+<table>
+  <tr><th style="width:260px;">问题</th><th>结论</th></tr>
+  <tr><td>返水进度条的填充比例计算公式</td><td>距下一档：填充比例 = 当前投注额 ÷ 下一档所需投注额，封顶 100%。</td></tr>
+  <tr>
+    <td><span class="tag">本次新增</span> 返水领取模式（结算周期）</td>
+    <td>
+      系统支持两种<strong>后台可配置</strong>的领取模式，二选一生效，玩家侧不感知切换：<br/>
+      ① <strong>次日领取</strong>：额度为固定批次金额，按 D+1 结算，领取后归零、需等次日才有新额度（对应字段 Pode ser coletado hoje / Disponível para coleta amanhã）；<br/>
+      ② <strong>实时领取</strong>：当日实时计算、手动领取，对应字段 Total gerado hoje（今日累计产生）/ Já coletado hoje（今日已领取），可领取余额 = 产生总额 − 已领取。打开 Receber 弹窗时按当前余额<strong>快照</strong>展示并锁定，即"进入领取页有多少显示多少，领取多少"；弹窗打开期间新产生的返水不计入本次、保留待下次领取，以此规避实时计算下的并发冲突。
+    </td>
+  </tr>
+  <tr><td>可领取金额为 0 时 Receber 按钮的表现</td><td>置灰禁用，不可点击（而非点击后弹窗提示）。</td></tr>
+  <tr><td>两种领取模式的说明文案是否展示给玩家</td><td><strong>不展示。</strong>D+1 与实时计算的说明文案仅作为内部逻辑备注，客户端界面不呈现给玩家，前端已隐藏对应元素。</td></tr>
+  <tr><td>场馆列表排序规则</td><td>由后台接口控制返回顺序，前端直接按接口顺序渲染，不做二次排序。</td></tr>
+  <tr><td>各场馆返水阶梯真实数值</td><td>由后端接口写入，前端按接口返回渲染，本文档 / 原型中的数值均为演示占位。</td></tr>
+  <tr><td>历史记录时间筛选的数据加载方式</td><td>重新请求接口，非前端本地过滤。</td></tr>
+  <tr><td>三类空状态（Cassino 场馆为空 / Esportes 阶梯为空 / 历史记录周期无数据）</td><td>统一使用同一套缺省页：灰度文档 + 放大镜图标，文案「Sem Registros」，居中显示。</td></tr>
+  <tr><td>Tab 改动标识（Ajustado 角标）</td><td>仅用于本轮内部评审阶段标识改动范围，不作为正式功能保留，上线前需移除。</td></tr>
+  <tr>
+    <td>Aposta 的统计周期口径</td>
+    <td>
+      Aposta（投注额）按<strong>自然日实时计算</strong>，次日 <strong>00:00 重置计数</strong>清零重新累计；但已计算出、尚未被玩家领取的返水奖金（Coletável）<strong>会持续累计保留</strong>，不随 Aposta 清零而消失或重置，直到玩家手动领取为止。即"Aposta 按天清零，Coletável 跨天累计"。
+    </td>
+  </tr>
+</table>
+
+<div class="note">
+  本轮全部待确认事项已确认完毕，11.1 表为最终结论，供开发排期与联调依据；如后续评审发现新的边界场景，请在此文档追加记录。
+</div>
+
+<footer>
+  本文档配套的可点击 HTML 交互原型文件：<code>rebate_prototype.html</code>，涵盖返水首页、场馆返水详情页、领取确认弹窗、历史记录页四个界面的完整点击路径，可用于开发联调前的交互确认。
+</footer>
+
+</body>
+</html>
