@@ -473,8 +473,31 @@
     padding:14px 16px;
     position:relative;
   }
-  .hist-bonus{font-size:15px; color:#eee;}
+  .hist-bonus{font-size:15px; color:#eee; white-space:nowrap;}
   .hist-bonus b{color:var(--accent2); font-weight:600;}
+  .hist-type-toggle{
+    display:flex;
+    background:#232323;
+    border:1px solid #333;
+    border-radius:8px;
+    padding:3px;
+    gap:2px;
+  }
+  .type-seg-btn{
+    border:none;
+    background:transparent;
+    color:#999;
+    font-size:12px;
+    padding:6px 10px;
+    border-radius:6px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .type-seg-btn.active{
+    background:var(--accent2);
+    color:#222;
+    font-weight:600;
+  }
   .dp-grid2{
     display:grid;
     grid-template-columns:repeat(2,1fr);
@@ -653,7 +676,11 @@
       <div class="dropdown" id="ddDate" onclick="toggleDateDropdown()">
         <span id="ddDateLabel">Hoje</span><span class="arrow">▾</span>
       </div>
-      <div class="hist-bonus">Bônus <b id="histBonus">3,01</b></div>
+      <div class="hist-type-toggle">
+        <button type="button" class="type-seg-btn" id="typeActivityBtn" onclick="selectHistType('activity')">Atividade</button>
+        <button type="button" class="type-seg-btn active" id="typeRebateBtn" onclick="selectHistType('rebate')">Rebate</button>
+      </div>
+      <div class="hist-bonus"><span id="histBonusLabel">Bônus</span> <b id="histBonus">3,01</b></div>
     </div>
 
     <div class="dropdown-panel" id="panelDate" style="left:16px; top:96px;">
@@ -964,9 +991,15 @@ renderSummary();
 
 /* ---------------- Screen C: Historico ----------------
    已确认：场馆 / 流水排序由后端接口返回顺序决定，前端不做二次排序，直接按接口顺序渲染。
-   已确认：切换时间范围会重新请求接口（非前端本地过滤），此处用 historyDataByPeriod 模拟不同周期
-   接口各自返回的数据；「Ontem」周期演示为空数据，对应统一的 Sem Registros 缺省页。 */
-const historyDataByPeriod = {
+   已确认：切换时间范围会重新请求接口（非前端本地过滤），此处用 rebateDataByPeriod / activityDataByPeriod
+   模拟不同周期接口各自返回的数据；「Ontem」周期演示为空数据，对应统一的 Sem Registros 缺省页。
+
+   新增：类型切换「返水记录 / 活动记录」——两者是并列的记录来源，而非"全部 vs 仅返水"的包含关系：
+   - 返水记录（Rebate）：Fonte 固定为 Rebate，即返水领取到账流水（原有数据）。
+   - 活动记录（Atividade）：与返水无关的其他活动/促销奖励，Fonte 为 Depósito、Convite 等其他来源
+     （示例数据，实际字段与来源以接口返回为准）。
+   顶部 Bônus/Total 汇总始终反映当前选中类型 + 当前选中周期的流水总额。 */
+const rebateDataByPeriod = {
   'Hoje': [
     {time:'07/14 04:51', name:'Cashback de Apostas', value:'0,15', source:'Rebate'},
     {time:'07/14 04:51', name:'Cashback de Apostas', value:'2,30', source:'Rebate'},
@@ -984,18 +1017,44 @@ const historyDataByPeriod = {
     {time:'07/14 04:51', name:'Cashback de Apostas', value:'0,56', source:'Rebate'}
   ]
 };
+const activityDataByPeriod = {
+  'Hoje': [
+    {time:'07/14 09:12', name:'Bônus de Depósito', value:'50,00', source:'Depósito'},
+    {time:'07/14 08:03', name:'Convide um Amigo', value:'20,00', source:'Convite'}
+  ],
+  'Ontem': [],
+  'Últimos 7 Dias': [
+    {time:'07/13 21:40', name:'Bônus de Depósito', value:'30,00', source:'Depósito'},
+    {time:'07/12 19:05', name:'Convide um Amigo', value:'20,00', source:'Convite'},
+    {time:'07/10 11:22', name:'Aniversário VIP', value:'15,00', source:'VIP'}
+  ],
+  'Últimos 30 Dias': [
+    {time:'07/13 21:40', name:'Bônus de Depósito', value:'30,00', source:'Depósito'},
+    {time:'07/05 19:05', name:'Convide um Amigo', value:'20,00', source:'Convite'},
+    {time:'06/29 11:22', name:'Aniversário VIP', value:'15,00', source:'VIP'}
+  ]
+};
 let currentPeriod = 'Hoje';
+let currentHistType = 'rebate'; // rebate | activity
 function openHistorico(){
   closeAllDropdowns();
   buildHistRows();
   show('screenC');
+}
+function selectHistType(type){
+  currentHistType = type;
+  document.getElementById('typeRebateBtn').classList.toggle('active', type==='rebate');
+  document.getElementById('typeActivityBtn').classList.toggle('active', type==='activity');
+  document.getElementById('histBonusLabel').textContent = type==='rebate' ? 'Bônus' : 'Total';
+  buildHistRows();
 }
 function sumBRL(rows){
   const total = rows.reduce((s,h) => s + parseFloat(h.value.replace(',','.')), 0);
   return fmtBRL(total);
 }
 function buildHistRows(){
-  const rows = historyDataByPeriod[currentPeriod] || [];
+  const dataset = currentHistType === 'rebate' ? rebateDataByPeriod : activityDataByPeriod;
+  const rows = dataset[currentPeriod] || [];
   const table = document.getElementById('histTable');
   const empty = document.getElementById('histEmpty');
   document.getElementById('histBonus').textContent = sumBRL(rows);
