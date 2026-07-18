@@ -103,12 +103,12 @@
 <div class="subtitle">投注返水 / 领取 / 历史记录 —— 需求与交互说明文档</div>
 
 <table class="meta-table">
-  <tr><td>文档版本</td><td>V1.0</td></tr>
-  <tr><td>更新日期</td><td>2026-07-14</td></tr>
+  <tr><td>文档版本</td><td>V1.3</td></tr>
+  <tr><td>更新日期</td><td>2026-07-18</td></tr>
   <tr><td>负责模块</td><td>Rebate（返水）</td></tr>
   <tr><td>关联端</td><td>App 客户端（葡语 pt-BR 站点）</td></tr>
   <tr><td>关联原型</td><td>rebate_prototype.html（HTML 可点击交互原型，与本文档配套）</td></tr>
-  <tr><td>状态</td><td>已定稿：全部待确认事项已在第十一节收口，可作为开发排期与联调依据</td></tr>
+  <tr><td>状态</td><td>已定稿：全部待确认事项已在第十一节收口，返水领取模式最终收敛为「次日领取（批次）/ 实时自动派发」两种，并已补充两种模式各自的返水比例档位计算规则（详见第六节、11.1、第十二节更新记录），可作为开发排期与联调依据</td></tr>
 </table>
 
 <div class="toc">
@@ -124,6 +124,7 @@
     <li><a href="#visual">视觉规范补充说明</a></li>
     <li><a href="#edge">异常与边界状态</a></li>
     <li><a href="#open">待确认事项</a></li>
+    <li><a href="#changelog">更新记录</a></li>
   </ol>
 </div>
 
@@ -138,7 +139,7 @@
   <tr>
     <td>本次新增 / 调整</td>
     <td>
-      Cassino 游戏类型入口；场馆卡片返水进度条（底纹样式）；点击 Receber 后的领取确认弹窗；Histórico 历史记录页（含时间范围筛选）；顶部 Tab 栏中 Rebate / Histórico 的改动标识；额度汇总条新增「返水领取模式配置」（次日领取 / 实时领取二选一，见 5.1 节）。
+      Cassino 游戏类型入口；场馆卡片返水进度条（底纹样式）；点击 Receber 后的领取确认弹窗；Histórico 历史记录页（含时间范围筛选）；顶部 Tab 栏中 Rebate / Histórico 的改动标识；额度汇总条新增「返水领取模式配置」，<span class="tag">V1.2</span> 最终收敛为「次日领取（批次）/ 实时自动派发」二选一（见 5.1 节；曾评审过的「实时领取（手动）」「实时计算·次日领取」两种模式已在本轮收口时移除，详见第十二节更新记录）。
     </td>
   </tr>
   <tr>
@@ -160,8 +161,8 @@
   <tr><td>Coletável</td><td>当前可领取金额</td></tr>
   <tr><td>Pode ser coletado hoje</td><td>今日可领取总额（「次日领取」配置模式使用）</td></tr>
   <tr><td>Disponível para coleta amanhã</td><td>次日预计可领取总额（「次日领取」配置模式使用）</td></tr>
-  <tr><td><span class="tag">本次新增</span> Total gerado hoje</td><td>今日累计产生的返水总额（「实时领取」配置模式使用）</td></tr>
-  <tr><td><span class="tag">本次新增</span> Já coletado hoje</td><td>今日已通过 Receber 领取到账的金额（「实时领取」配置模式使用）</td></tr>
+  <tr><td>Total gerado hoje</td><td>今日累计产生的返水总额（「实时自动派发」配置模式使用）</td></tr>
+  <tr><td>Distribuído automaticamente</td><td>已自动派发到账的金额（「实时自动派发」配置模式使用，数值恒等于当日累计产生总额）</td></tr>
   <tr><td>Receber</td><td>领取（操作按钮）</td></tr>
   <tr><td>Histórico</td><td>历史记录</td></tr>
   <tr><td>Modalidade</td><td>玩法大类（如 Slot / Esportes）</td></tr>
@@ -214,21 +215,21 @@
       <table style="margin-top:10px;">
         <tr><th style="width:110px;">配置模式</th><th>字段一</th><th>字段二</th><th>内部说明文案（不展示给玩家）</th><th>Receber 逻辑</th></tr>
         <tr>
-          <td>次日领取</td>
+          <td>① 次日领取（批次）</td>
           <td>Pode ser coletado hoje（今日可领取）</td>
           <td>Disponível para coleta amanhã（次日预计可领取）</td>
           <td>* Rebate é liquidado em D+1: os valores de hoje referem-se às apostas de ontem.</td>
           <td>当日额度为固定批次金额，领取后归零，新额度需等次日结算才会出现。</td>
         </tr>
         <tr>
-          <td>实时领取</td>
+          <td>② 实时自动派发</td>
           <td>Total gerado hoje（今日累计产生的返水总额）</td>
-          <td>Já coletado hoje（今日已领取金额）</td>
-          <td>* Cálculo em tempo real: o valor exibido é o valor no momento em que você abre a coleta.</td>
-          <td>可领取余额 = 产生总额 − 已领取；打开 Receber 时按当前余额快照锁定展示，领取后「已领取」增加、余额相应减少。</td>
+          <td>Distribuído automaticamente（已自动派发金额，恒等于字段一）</td>
+          <td>* Distribuição automática em tempo real: assim que a aposta é liquidada, o rebate correspondente é calculado e creditado automaticamente na conta.</td>
+          <td>当日游戏注单结算后，系统即时计算返水并自动派发到账，<strong>无需玩家手动领取</strong>；Receber 按钮隐藏，替换为「✓ Distribuição automática」状态标识（不可点击）。</td>
         </tr>
       </table>
-      <strong>已确认：</strong>上表中的说明文案仅作为内部逻辑备注，<strong>不在客户端界面展示给玩家</strong>；原型中对应元素已通过 <code>display:none</code> 隐藏，保留结构与文案供内部核对，不做界面呈现。原型页顶部提供了「次日领取 / 实时领取」预览切换按钮，仅用于评审对比两种配置效果，非客户端正式功能。
+      <strong>已确认：</strong>上表中的说明文案仅作为内部逻辑备注，<strong>不在客户端界面展示给玩家</strong>；原型中对应元素已通过 <code>display:none</code> 隐藏，保留结构与文案供内部核对，不做界面呈现。原型页顶部提供了两种模式的预览切换按钮，仅用于评审对比配置效果，非客户端正式功能。
     </td>
   </tr>
   <tr>
@@ -276,12 +277,12 @@
       <strong>计算公式（已确认）：距下一档</strong> —— 填充比例 = 当前投注额 ÷ 下一档所需投注额（阶梯门槛沿用第六节场馆详情页的投注门槛表：1,00 / 100.000,00 / 500.000,00 / 1.000.000,00 / 3.000.000,00 / 5.000.000,00 / 10.000.000,00），达到或超过最高档时封顶显示 100%。当 Aposta 为 0 时填充为 0%，仅显示底纹。原型中 PG（45.000,00 / 45%）、JDB（320.000,00 / 64%）两张卡片已按该公式演示非零进度状态，其余卡片保持 0% 占位。
     </td>
   </tr>
-  <tr><td>Coletável</td><td>该场馆当前可领取的返水金额，原型中按「Aposta × Taxa de reembolso」估算展示，实际以接口返回为准。</td></tr>
+  <tr><td>Coletável</td><td>该场馆当前可领取的返水金额，原型中按「Aposta × Taxa de reembolso」估算展示，实际以接口返回为准；<strong>真实计算规则</strong>（次日领取按整段最终档位计算 / 实时自动派发按分段累进计算）见本节 6.1「返水比例档位计算规则」。</td></tr>
   <tr><td>Chevron（›）</td><td>点击整张卡片或箭头，跳转至该场馆的返水详情页（Taxa de reembolso）。</td></tr>
 </table>
 
 <div class="note">
-  场馆列表排序规则、Aposta 的统计周期均已在第十一节确认（详见 11.1）；各场馆真实的阶梯门槛与比例数值由后端接口写入，本文档及原型中的数值仅为演示占位。
+  场馆列表排序规则、Aposta 的统计周期、返水比例档位的计算方式均已在第十一节确认（详见 11.1）；各场馆真实的阶梯门槛与比例数值由后端接口写入，本文档及原型中的数值仅为演示占位。
 </div>
 
 <h2 id="p2">六、页面二：场馆返水详情页（Taxa de reembolso）</h2>
@@ -311,6 +312,27 @@
     </td>
   </tr>
 </table>
+
+<h3><span class="tag">V1.3 新增</span> 6.1 返水比例档位计算规则（次日领取 vs 实时自动派发）</h3>
+<p>同一套阶梯门槛表在两种领取模式下，最终返水金额的计算方式并不相同，原因是「能否实时把钱发出去」这一约束不同：次日批次结算时全天流水已经产生完毕，可以倒推按最终档位整体计算；实时自动派发是"发生一笔、结算一笔"，无法回头修改已经派发出去的返水，因此只能按分段累进计算。</p>
+<table>
+  <tr><th style="width:150px;">配置模式</th><th>计算方式</th><th>示例（沿用上表阶梯）</th></tr>
+  <tr>
+    <td>① 次日领取（批次）</td>
+    <td>「整段封顶」算法：统一计算前一自然日（D-1）的总投注流水，判断该总额最终达标到哪一档，即按该档位的比例对全天流水整体计算，不分段。</td>
+    <td>当日总投注 600.000,00，最终达标档位为「500.000,00 → 0,80%」，则当日返水 = 600.000,00 × 0,80% = <strong>4.800,00</strong>。</td>
+  </tr>
+  <tr>
+    <td>② 实时自动派发</td>
+    <td>「分段累进」算法：返水随投注实时计算并派发，每一笔（或每一批）新增投注只能按其发生时所处的档位比例计入，不追溯、不重算已派发部分。</td>
+    <td>同样 600.000,00 总投注，分三段计算：0~100.000,00 段 × 0,30%；100.000,00~500.000,00 段 × 0,50%；500.000,00~600.000,00 段 × 0,80%；合计返水 = 300,00 + 2.000,00 + 800,00 = <strong>3.100,00</strong>。</td>
+  </tr>
+</table>
+<div class="note">
+  <strong>已确认：</strong>两种模式因算法不同，同等投注流水下的返水总额存在差异，「实时自动派发」通常低于「次日领取（批次）」——<strong>此差异为预期内设计</strong>，即实时自动派发在成本上更保守。<br/>
+  <strong>已确认：</strong>档位达标边界与返水进度条一致，采用「≥ 门槛即算达标」。<br/>
+  <strong>已确认：</strong>「实时自动派发」的分段颗粒度（按单笔注单结算触发，还是按定时任务批量合并计算）由开发根据系统效率自行决定；若采用批量合并，需保证合并区间内跨档位的差额被正确拆分计算，不可将整个合并区间统一按单一档位计算，避免多算或漏算。
+</div>
 
 <h2 id="p3">七、交互组件：领取（Receber）确认弹窗</h2>
 <p><span class="tag">本次新增</span> 玩家在返水首页点击绿色 Receber 按钮后触发，用于二次确认领取动作并展示领取结果。</p>
@@ -376,8 +398,18 @@
     <td><span class="tag">本次新增</span> 返水领取模式（结算周期）</td>
     <td>
       系统支持两种<strong>后台可配置</strong>的领取模式，二选一生效，玩家侧不感知切换：<br/>
-      ① <strong>次日领取</strong>：额度为固定批次金额，按 D+1 结算，领取后归零、需等次日才有新额度（对应字段 Pode ser coletado hoje / Disponível para coleta amanhã）；<br/>
-      ② <strong>实时领取</strong>：当日实时计算、手动领取，对应字段 Total gerado hoje（今日累计产生）/ Já coletado hoje（今日已领取），可领取余额 = 产生总额 − 已领取。打开 Receber 弹窗时按当前余额<strong>快照</strong>展示并锁定，即"进入领取页有多少显示多少，领取多少"；弹窗打开期间新产生的返水不计入本次、保留待下次领取，以此规避实时计算下的并发冲突。
+      ① <strong>次日领取（批次）</strong>：额度为固定批次金额，按 D+1 结算，领取后归零、需等次日才有新额度（对应字段 Pode ser coletado hoje / Disponível para coleta amanhã）；<br/>
+      ② <strong>实时自动派发</strong>：业务原话"当日游戏注单结算后，及时进行返水计算和自动派发"。注单结算后系统立即计算并<strong>自动</strong>将返水存入玩家账户，无需玩家点击 Receber；客户端 Receber 按钮隐藏，改为「✓ Distribuição automática」状态标识。<br/>
+      <span class="tag">V1.2</span> 评审过程中曾一度扩展至四种（另含「实时领取·手动」「实时计算·次日领取」两种模式），后经业务确认<strong>收敛为上述两种</strong>，多余两种已从原型与本文档移除，详见第十二节更新记录。
+    </td>
+  </tr>
+  <tr>
+    <td><span class="tag">V1.3 新增</span> 返水比例档位的计算方式（次日领取 vs 实时自动派发）</td>
+    <td>
+      两种领取模式使用不同的档位计算算法（完整定义与示例见第六节 6.1）：<br/>
+      ① 次日领取（批次）：按前一日（D-1）总投注流水最终达标的档位，对全天流水整体计算返水，不分段；<br/>
+      ② 实时自动派发：按分段累进计算，每段投注只按其发生时所处的档位比例计入，不追溯已派发部分。<br/>
+      已确认同等流水下两种模式的返水总额存在差异（②通常低于①），<strong>为预期内设计</strong>；档位边界采用"≥ 门槛即算达标"，与进度条公式一致；②的分段颗粒度（单笔触发 / 定时批量合并）由开发按系统效率自行决定，但批量合并时需保证跨档位的差额被正确拆分计算，不可整体误记为单一档位。
     </td>
   </tr>
   <tr><td>可领取金额为 0 时 Receber 按钮的表现</td><td>置灰禁用，不可点击（而非点击后弹窗提示）。</td></tr>
@@ -398,6 +430,45 @@
 <div class="note">
   本轮全部待确认事项已确认完毕，11.1 表为最终结论，供开发排期与联调依据；如后续评审发现新的边界场景，请在此文档追加记录。
 </div>
+
+<h2 id="changelog">十二、更新记录</h2>
+<table>
+  <tr><th style="width:90px;">版本</th><th style="width:110px;">日期</th><th>变更内容</th></tr>
+  <tr>
+    <td>V1.0</td>
+    <td>2026-07-14</td>
+    <td>初版：返水首页、场馆详情页、Receber 领取弹窗、历史记录页；返水领取模式支持「次日领取」「实时领取」二选一配置。</td>
+  </tr>
+  <tr>
+    <td>V1.1</td>
+    <td>2026-07-17</td>
+    <td>
+      新增两种返水领取模式（后台四选一配置，玩家侧不感知切换）：<br/>
+      ③ <strong>实时自动派发</strong>——当日注单结算后系统即时计算并自动派发返水，无需玩家手动领取，Receber 按钮隐藏并替换为自动派发状态标识；<br/>
+      ④ <strong>实时计算·次日领取</strong>——当日注单结算后客户端实时显示可领金额，但需等次日才能实际领取（Receber 当日置灰 + 「Disponível amanhã」提示），用于提升客户次日留存。<br/>
+      同步更新：5.1 领取模式对比表（2→4 行）、三/术语说明新增字段（Distribuído automaticamente / Gerado hoje (tempo real) / Disponível amanhã）、11.1 已确认结论、原型页预览切换按钮（新增「实时自动派发」「实时计算·次日领取」两个选项，后者额外提供「今日 / 次日」模拟时间子切换用于演示留存机制）。
+    </td>
+  </tr>
+  <tr>
+    <td>V1.2</td>
+    <td>2026-07-17</td>
+    <td>
+      业务收口：返水领取模式最终确定<strong>仅保留①次日领取（批次）与③实时自动派发</strong>两种，移除本轮曾评审过的②实时领取（手动）、④实时计算·次日领取。<br/>
+      原型同步移除：预览切换按钮从四选一收窄为二选一；「今日 / 次日」模拟时间子切换（.retention-toggle）、Receber 按钮下方「Disponível amanhã」提示（.receber-hint）及对应 JS 状态变量（realtimeGenerated / realtimeCollected / retTodayAccrual / retUnlockedYesterday / retentionDay）全部删除。<br/>
+      文档同步移除：5.1 领取模式对比表（4→2 行）、术语说明中 Já coletado hoje / Gerado hoje (tempo real) / Disponível amanhã 三项、11.1 已确认结论中②④相关描述。
+    </td>
+  </tr>
+  <tr>
+    <td>V1.3</td>
+    <td>2026-07-18</td>
+    <td>
+      新增两种领取模式各自的<strong>返水比例档位计算规则</strong>（第六节 6.1，同步补充 11.1 已确认结论）：<br/>
+      ① 次日领取（批次）——「整段封顶」算法：按前一日总投注流水最终达标的档位，对全天流水整体计算，不分段；<br/>
+      ② 实时自动派发——「分段累进」算法：每段投注只按其发生时所处的档位比例计入，不追溯已派发部分。<br/>
+      已确认：同等流水下两种模式返水总额存在差异（②通常低于①）为预期内设计；档位边界与进度条公式一致，采用"≥ 门槛即算达标"；②的分段颗粒度（单笔触发 / 定时批量合并）由开发按系统效率自行决定，但批量合并需保证跨档位差额正确拆分。同步更新 5.2 节 Coletável 字段说明的计算规则指引。
+    </td>
+  </tr>
+</table>
 
 <footer>
   本文档配套的可点击 HTML 交互原型文件：<code>rebate_prototype.html</code>，涵盖返水首页、场馆返水详情页、领取确认弹窗、历史记录页四个界面的完整点击路径，可用于开发联调前的交互确认。
