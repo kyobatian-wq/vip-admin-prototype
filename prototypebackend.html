@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>会员返水记录 - 原型</title>
+  <style>
+    :root {
+      --sidebar: #061d31;
+      --sidebar-2: #0b2a42;
+      --active: #1173d8;
+      --line: #e8edf3;
+      --text: #27394d;
+      --muted: #8492a6;
+      --bg: #f3f6f9;
+      --blue: #1890ff;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-width: 1280px;
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    .app { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: 208px;
+      background: var(--sidebar);
+      color: #b8c6d6;
+      flex: 0 0 208px;
+    }
+
+    .brand {
+      height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 14px;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 700;
+      border-bottom: 1px solid rgba(255,255,255,.05);
+    }
+
+    .logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background:
+        radial-gradient(circle at 70% 20%, #f6cf4b 0 9px, transparent 10px),
+        linear-gradient(135deg, #fb7834, #221a2f 58%, #070b15);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.2);
+    }
+
+    .menu { padding: 8px 0; }
+    .menu-item, .submenu-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      height: 50px;
+      padding: 0 16px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .menu-item .dot {
+      width: 14px;
+      text-align: center;
+      opacity: .85;
+    }
+
+    .menu-item .chev { margin-left: auto; opacity: .75; }
+    .menu-section { background: rgba(255,255,255,.02); }
+    .submenu-item {
+      height: 50px;
+      padding-left: 38px;
+      font-size: 14px;
+      color: #c4d2e2;
+      background: var(--sidebar-2);
+    }
+
+    .submenu-item.active {
+      background: var(--active);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .main {
+      min-width: 0;
+      flex: 1;
+      background: var(--bg);
+    }
+
+    .topbar {
+      height: 46px;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      padding: 0 18px;
+      color: #97a4b4;
+    }
+
+    .hamburger { color: #526373; margin-right: 18px; font-size: 20px; }
+    .crumb { font-size: 15px; }
+    .clock { margin-left: auto; color: #7f8b99; font-size: 13px; }
+
+    .tabs {
+      height: 38px;
+      display: flex;
+      align-items: end;
+      gap: 2px;
+      padding: 0 12px;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .tab {
+      height: 32px;
+      min-width: 70px;
+      padding: 0 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-bottom: 0;
+      background: #fff;
+      color: #4d5d70;
+      font-size: 13px;
+    }
+
+    .tab.active {
+      background: var(--active);
+      color: #fff;
+      border-color: var(--active);
+      font-weight: 700;
+    }
+
+    .search {
+      background: #fff;
+      padding: 14px 38px 18px;
+      border-bottom: 14px solid var(--bg);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 110px minmax(360px, 1fr) 96px minmax(340px, .8fr) 96px minmax(340px, .8fr);
+      gap: 10px 12px;
+      align-items: center;
+    }
+
+    .label {
+      text-align: right;
+      color: #394b5f;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .field {
+      height: 38px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+    }
+
+    .time-range input {
+      flex: 1 1 0;
+    }
+
+    .time-range .help {
+      flex: 0 0 18px;
+    }
+
+    input, select {
+      height: 36px;
+      border: 1px solid #dfe6ee;
+      border-radius: 2px;
+      color: #778599;
+      background: #fff;
+      padding: 0 12px;
+      width: 100%;
+      min-width: 0;
+      font: inherit;
+    }
+
+    .range-mark { color: #98a5b5; }
+    .help {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      margin-left: 6px;
+      border: 1px solid #a8bed6;
+      border-radius: 50%;
+      color: #5d7793;
+      background: #f6faff;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+      cursor: help;
+      outline: 0;
+    }
+
+    .help::after {
+      content: attr(data-tip);
+      position: absolute;
+      left: 50%;
+      top: 28px;
+      z-index: 5;
+      width: max-content;
+      max-width: 280px;
+      padding: 8px 10px;
+      border-radius: 4px;
+      background: #27394d;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.5;
+      text-align: left;
+      white-space: normal;
+      box-shadow: 0 6px 16px rgba(0,0,0,.18);
+      opacity: 0;
+      transform: translate(-50%, -4px);
+      pointer-events: none;
+      transition: opacity .15s ease, transform .15s ease;
+    }
+
+    .help::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 22px;
+      z-index: 6;
+      border: 6px solid transparent;
+      border-bottom-color: #27394d;
+      opacity: 0;
+      transform: translateX(-50%);
+      transition: opacity .15s ease;
+    }
+
+    .help:hover::after,
+    .help:hover::before,
+    .help:focus::after,
+    .help:focus::before {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    .help:hover::before,
+    .help:focus::before {
+      transform: translateX(-50%);
+    }
+
+    .actions {
+      grid-column: 2 / span 2;
+      display: flex;
+      gap: 10px;
+      padding-top: 2px;
+    }
+
+    button {
+      height: 36px;
+      padding: 0 22px;
+      border: 1px solid #d9e2ec;
+      border-radius: 3px;
+      background: #fff;
+      color: #394b5f;
+      font-weight: 700;
+      cursor: default;
+    }
+
+    .primary {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: #fff;
+    }
+
+    .content {
+      margin: 0 16px 28px;
+      background: #fff;
+      min-height: 760px;
+      padding: 38px 22px 24px;
+      position: relative;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 8px;
+      gap: 10px;
+    }
+
+    .icon-btn {
+      min-width: 64px;
+      height: 34px;
+      padding: 0 14px;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      border: 1px solid var(--line);
+      color: #26384b;
+    }
+
+    th, td {
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      height: 68px;
+      padding: 8px 12px;
+      text-align: center;
+      vertical-align: middle;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    th {
+      height: 48px;
+      background: #fff;
+      font-weight: 700;
+      color: #26384b;
+    }
+
+    tbody tr:nth-child(even) { background: #fcfcfd; }
+    .amount {
+      color: #26384b;
+      font-weight: 400;
+      text-decoration: none;
+      cursor: default;
+    }
+
+    .time-cell {
+      line-height: 1.55;
+      white-space: normal;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 22px;
+      min-width: 54px;
+      padding: 0 8px;
+      color: #128ee8;
+      background: #e8f6ff;
+      border: 1px solid #91d5ff;
+      border-radius: 2px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .muted { color: #7c8999; }
+    .float {
+      position: fixed;
+      right: 34px;
+      bottom: 42px;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #8a8f96;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(0,0,0,.18);
+    }
+
+    .change-notes {
+      margin: 22px 16px 32px;
+      padding: 20px 22px 22px;
+      background: #fff;
+      border: 1px solid var(--line);
+    }
+
+    .change-notes h2 {
+      margin: 0 0 14px;
+      font-size: 16px;
+      line-height: 1.4;
+      color: #26384b;
+    }
+
+    .change-list {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .change-card {
+      min-height: 96px;
+      padding: 14px 16px;
+      border: 1px solid #dfe6ee;
+      border-radius: 4px;
+      background: #fbfdff;
+    }
+
+    .change-card strong {
+      display: inline-flex;
+      align-items: center;
+      height: 24px;
+      margin-bottom: 8px;
+      padding: 0 8px;
+      border-radius: 2px;
+      font-size: 12px;
+    }
+
+    .change-card p {
+      margin: 0;
+      color: #526373;
+      line-height: 1.7;
+    }
+
+    .mark-add strong {
+      color: #0f8a43;
+      background: #e8f7ef;
+      border: 1px solid #9bd8b5;
+    }
+
+    .mark-remove strong {
+      color: #b42318;
+      background: #fff1f0;
+      border: 1px solid #ffb4ad;
+    }
+
+    .mark-update strong {
+      color: #1166b7;
+      background: #e8f4ff;
+      border: 1px solid #9ccfff;
+    }
+
+    col.member-id { width: 120px; }
+    col.account { width: 150px; }
+    col.rebate-time { width: 230px; }
+    col.amount-col { width: 120px; }
+    col.currency { width: 120px; }
+    col.mode { width: 120px; }
+    col.method { width: 120px; }
+    col.venue { width: 150px; }
+    col.multiple { width: 120px; }
+    col.status { width: 120px; }
+    col.receive-time { width: 120px; }
+    col.issue-time { width: 180px; }
+    col.account-type { width: 120px; }
+    col.level { width: 120px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><span class="logo"></span><span>DD.GG</span></div>
+      <nav class="menu">
+        <div class="menu-item"><span class="dot">◉</span><span>平台概况</span><span class="chev">⌄</span></div>
+        <div class="menu-item"><span class="dot">⚙</span><span>系统管理</span><span class="chev">⌄</span></div>
+        <div class="menu-item"><span class="dot">▥</span><span>商户游戏管理</span><span class="chev">⌄</span></div>
+        <div class="menu-item"><span class="dot">♙</span><span>会员管理</span><span class="chev">⌄</span></div>
+        <div class="menu-item"><span class="dot">◎</span><span>商户财务管理</span><span class="chev">⌄</span></div>
+        <div class="menu-item"><span class="dot">▣</span><span>报表查询</span><span class="chev">⌄</span></div>
+        <div class="menu-item"><span class="dot">▦</span><span>代理中心(无限极差)</span><span class="chev">⌄</span></div>
+        <div class="menu-item"><span class="dot">▤</span><span>商户财务配置</span><span class="chev">⌄</span></div>
+        <div class="menu-item"><span class="dot">✉</span><span>消息管理</span><span class="chev">⌄</span></div>
+        <div class="menu-item"><span class="dot">▧</span><span>福利中心</span><span class="chev">⌄</span></div>
+        <div class="menu-item"><span class="dot">⚙</span><span>运营相关</span><span class="chev">⌄</span></div>
+        <div class="menu-item"><span class="dot">⌘</span><span>推广渠道管理</span><span class="chev">⌄</span></div>
+        <div class="menu-item"><span class="dot">◈</span><span>游戏策略配置</span><span class="chev">⌄</span></div>
+        <div class="menu-section">
+          <div class="menu-item"><span class="dot">▣</span><span>返水管理</span><span class="chev">⌃</span></div>
+          <div class="submenu-item">返水配置管理</div>
+          <div class="submenu-item active">会员返水记录</div>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <span class="hamburger">☰</span>
+        <span class="crumb">返水管理&nbsp;&nbsp;/&nbsp;&nbsp;会员返水记录</span>
+        <span class="clock">2026-07-21 22:01:32（巴西圣保罗：UTC-3）&nbsp;&nbsp;bxcuclus1</span>
+      </header>
+
+      <div class="tabs">
+        <div class="tab">首页</div>
+        <div class="tab active">会员返水记录 ×</div>
+      </div>
+
+      <section class="search">
+        <div class="form-grid">
+          <div class="label">会员ID</div>
+          <div class="field"><input value="" placeholder="会员ID"></div>
+          <div class="label">会员账号</div>
+          <div class="field"><input value="" placeholder="会员账号"></div>
+          <div class="label">领取状态</div>
+          <div class="field">
+            <select>
+              <option>全部</option>
+              <option>未领取</option>
+              <option>已领取</option>
+            </select>
+          </div>
+
+          <div class="label">返水数据生成时间</div>
+          <div class="field time-range" style="grid-column: span 3;">
+            <input value="" placeholder="开始时间">
+            <span class="range-mark">至</span>
+            <input value="" placeholder="结束时间">
+            <span class="help" tabindex="0" aria-label="字段说明：订单产生时对应站点的当地时间" data-tip="订单产生时对应站点的当地时间">?</span>
+          </div>
+          <div class="label">返水金额</div>
+          <div class="field">
+            <input value="" placeholder="个人返水金额(最小)">
+            <span class="range-mark">至</span>
+            <input value="" placeholder="个人返水金额(最大)">
+          </div>
+
+          <div class="actions">
+            <button>重 置</button>
+            <button class="primary">查 询</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="content">
+        <div class="toolbar">
+          <button class="icon-btn">导 出</button>
+        </div>
+        <table>
+          <colgroup>
+            <col class="member-id"><col class="account"><col class="rebate-time"><col class="amount-col">
+            <col class="currency"><col class="mode"><col class="method"><col class="venue">
+            <col class="multiple"><col class="status"><col class="receive-time"><col class="issue-time">
+            <col class="account-type"><col class="level">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>会员ID</th>
+              <th>会员账号</th>
+              <th>返水数据生成时间</th>
+              <th>返水金额</th>
+              <th>钱包币种</th>
+              <th>返水模式</th>
+              <th>发放形式</th>
+              <th>场馆</th>
+              <th>稽核倍数</th>
+              <th>领取状态</th>
+              <th>领取时间</th>
+              <th>发放时间</th>
+              <th>账号类型</th>
+              <th>会员等级</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>11317463</td><td>11985868454</td><td class="time-cell">2026-07-21 06:42:09<br>(UTC-3)</td><td><span class="amount">180</span></td><td>BRL</td><td>次日</td><td>系统</td><td>PGSlot</td><td></td><td><span class="tag">未领取</span></td><td class="muted">-</td><td class="time-cell">2026-07-21 06:42:09<br>(UTC-3)</td><td></td><td></td></tr>
+            <tr><td>11088451</td><td>11985868228</td><td class="time-cell">2026-07-21 06:42:09<br>(UTC-3)</td><td><span class="amount">2.45</span></td><td>BRL</td><td>次日</td><td>系统</td><td>JDBSlot</td><td></td><td><span class="tag">未领取</span></td><td class="muted">-</td><td class="time-cell">2026-07-21 06:42:09<br>(UTC-3)</td><td></td><td></td></tr>
+            <tr><td>11088451</td><td>11985868228</td><td class="time-cell">2026-07-21 06:42:09<br>(UTC-3)</td><td><span class="amount">4.2</span></td><td>BRL</td><td>次日</td><td>系统</td><td>CQ9</td><td></td><td><span class="tag">未领取</span></td><td class="muted">-</td><td class="time-cell">2026-07-21 06:42:09<br>(UTC-3)</td><td></td><td></td></tr>
+            <tr><td>11088451</td><td>11985868228</td><td class="time-cell">2026-07-21 06:42:09<br>(UTC-3)</td><td><span class="amount">73.14</span></td><td>BRL</td><td>次日</td><td>系统</td><td>DBVideo</td><td></td><td><span class="tag">未领取</span></td><td class="muted">-</td><td class="time-cell">2026-07-21 06:42:09<br>(UTC-3)</td><td></td><td></td></tr>
+            <tr><td>73318112</td><td>11912121212</td><td class="time-cell">2026-07-21 06:42:09<br>(UTC-3)</td><td><span class="amount">0.45</span></td><td>BRL</td><td>次日</td><td>系统</td><td>RubyPlaySlot</td><td></td><td><span class="tag">未领取</span></td><td class="muted">-</td><td class="time-cell">2026-07-21 06:42:09<br>(UTC-3)</td><td></td><td></td></tr>
+            <tr><td>11088451</td><td>11985868228</td><td class="time-cell">2026-07-21 06:42:09<br>(UTC-3)</td><td><span class="amount">2.325</span></td><td>BRL</td><td>次日</td><td>系统</td><td>YellowBat</td><td></td><td><span class="tag">未领取</span></td><td class="muted">-</td><td class="time-cell">2026-07-21 06:42:09<br>(UTC-3)</td><td></td><td></td></tr>
+            <tr><td>11088451</td><td>11985868228</td><td class="time-cell">2026-07-21 06:42:09<br>(UTC-3)</td><td><span class="amount">33.6</span></td><td>BRL</td><td>次日</td><td>系统</td><td>TPSlot</td><td></td><td><span class="tag">未领取</span></td><td class="muted">-</td><td class="time-cell">2026-07-21 06:42:09<br>(UTC-3)</td><td></td><td></td></tr>
+            <tr><td>11088451</td><td>11985868228</td><td class="time-cell">2026-07-21 06:42:09<br>(UTC-3)</td><td><span class="amount">1.15</span></td><td>BRL</td><td>次日</td><td>系统</td><td>RubyPlaySlot</td><td></td><td><span class="tag">未领取</span></td><td class="muted">-</td><td class="time-cell">2026-07-21 06:42:09<br>(UTC-3)</td><td></td><td></td></tr>
+            <tr><td>11088451</td><td>11985868228</td><td class="time-cell">2026-07-21 06:42:09<br>(UTC-3)</td><td><span class="amount">0.225</span></td><td>BRL</td><td>次日</td><td>系统</td><td>PlaysonSlot</td><td></td><td><span class="tag">未领取</span></td><td class="muted">-</td><td class="time-cell">2026-07-21 06:42:09<br>(UTC-3)</td><td></td><td></td></tr>
+            <tr><td>11088451</td><td>11985868228</td><td class="time-cell">2026-07-21 06:42:09<br>(UTC-3)</td><td><span class="amount">0.28</span></td><td>BRL</td><td>次日</td><td>系统</td><td>InOutSlot</td><td></td><td><span class="tag">未领取</span></td><td class="muted">-</td><td class="time-cell">2026-07-21 06:42:09<br>(UTC-3)</td><td></td><td></td></tr>
+          </tbody>
+        </table>
+      </section>
+      <section class="change-notes">
+        <h2>前端调整说明</h2>
+        <ul class="change-list">
+          <li class="change-card mark-add">
+            <strong>新增</strong>
+            <p>搜索条件新增“返水数据生成时间”，问号提示放在该时间范围条件末尾；鼠标移入或键盘聚焦时展示“订单产生时对应站点的当地时间”。</p>
+          </li>
+          <li class="change-card mark-remove">
+            <strong>移除</strong>
+            <p>移除原搜索条件和结果列表中的“订单号”字段；左侧菜单隐藏“会员返水审核”入口。</p>
+          </li>
+          <li class="change-card mark-update">
+            <strong>调整</strong>
+            <p>结果列表将“订单号”列替换为“返水数据生成时间”；“返水金额”改为普通文本展示，取消点击跳转；页面载入时列表默认查询站点今日数据。</p>
+          </li>
+        </ul>
+      </section>
+    </main>
+  </div>
+  <div class="float">↑</div>
+</body>
+</html>
