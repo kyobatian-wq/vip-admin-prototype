@@ -346,7 +346,7 @@
     <td>返水为<strong>当日实时计算、手动领取</strong>，并非隔日（D+1）结算（此前版本描述有误，已修正）。玩家的返水额度随投注实时累计；打开 Receber 领取入口时，按<strong>当前快照金额</strong>展示 —— 即"进入领取页有多少显示多少，领取多少"：弹窗打开瞬间读取一次当前可领取总额并锁定展示，点击 Confirmar 即按该快照金额领取。若打开弹窗后、点击 Confirmar 前又产生了新的返水，新增部分不计入本次领取，会保留在「Pode ser coletado hoje」中供下次领取，不会丢失，以此方式规避实时计算下的并发冲突。</td>
   </tr>
   <tr><td>Confirmar 按钮</td><td>点击后：① 关闭弹窗；② 将该笔（快照）金额计入玩家主账户余额（需后端接口支持）；③ 返水首页「Pode ser coletado hoje」按领取金额扣减（若领取期间无新增，则归零）；④ 对应场馆卡片的 Coletável 应同步扣减（原型中暂未做单卡片联动，需前端实现时补充）。</td></tr>
-  <tr><td>无可领取金额时（已确认）</td><td>若「Pode ser coletado hoje」为 0,00，Receber 按钮<strong>置灰禁用</strong>、不可点击（原型已实现：领取成功后按钮自动变灰）。</td></tr>
+  <tr><td>无可领取金额时（已确认）</td><td>若「Pode ser coletado hoje」为小于 0,01，Receber 按钮<strong>置灰禁用</strong>、不可点击（原型已实现：领取成功后按钮自动变灰）。</td></tr>
 </table>
 
 <h2 id="p4">八、页面三：历史记录页（Histórico）</h2>
